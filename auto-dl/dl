@@ -19,7 +19,6 @@ AUTHKEY=$(cat $ADNIDB_ROOT/instance/scratch/page2.txt | grep '&authKey=[^\"]*' |
 USERID=$(cat $ADNIDB_ROOT/instance/scratch/page2.txt | grep '&userId=' | sed -e "s/.*=//" -e "s/\".*//")
 
 # Read all the individual entries
-<<'SKIP'
 mkdir -p $ADNIDB_ROOT/instance/ADNI
 for ROW in $(cat $ADNIDB_ROOT/ADNI_ID_corr.csv | awk 'NR > 1 {print $1}'); do
 
@@ -29,16 +28,12 @@ for ROW in $(cat $ADNIDB_ROOT/ADNI_ID_corr.csv | awk 'NR > 1 {print $1}'); do
   echo "Downloading $CSV_NAME VIA $CSV_ID"
   curl -s -d userId=${USERID} -d authKey=${AUTHKEY} -d fileId=$CSV_ID -d type=GET_FILES \
     -o $ADNIDB_ROOT/instance/ADNI/${CSV_NAME}.csv \
-    https://utilities.loni.usc.edu/download/study &
+    https://utilities.loni.usc.edu/download/study
 
 done
-SKIP
 
 # Download the data dictionary into the meta directory
 mkdir -p $ADNIDB_ROOT/instance/savefile/meta
 curl -s -d userId=${USERID} -d authKey=${AUTHKEY} -d fileId=83 -d type=GET_FILES \
   -o $ADNIDB_ROOT/instance/savefile/meta/DATADIC.csv \
-  https://utilities.loni.usc.edu/download/study &
-
-# Wait for all child processes
-wait
+  https://utilities.loni.usc.edu/download/study

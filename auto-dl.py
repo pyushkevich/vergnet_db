@@ -17,7 +17,7 @@ config = {
     'ADNIDB_NEO4J_IMPORT' :   os.environ.get('ADNIDB_NEO4J_IMPORT',   os.path.join(rootdir, 'instance/db/import'))
 }
 
-#run([rootdir+'/auto-dl/dl'],shell=True)
+run([rootdir+'/auto-dl/dl'],shell=True)
 print('Done')
 
 dir_csv=rootdir + "/instance/ADNI"

@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Login
+curl -s "https://ida.loni.usc.edu/login.jsp?project=ADNI&page=HOME" \
+  -c $ADNIDB_ROOT/instance/secrets/loni_cookie.txt \
+  -d "userEmail=${ADNIDB_LONI_USERNAME}&userPassword=${ADNIDB_LONI_PASSWORD}" \
+  > $ADNIDB_ROOT/instance/scratch/page.txt
+
+# Extract the URL with login key
+URL=$(cat $ADNIDB_ROOT/instance/scratch/page.txt | grep '>Study Data</a>' | sed -e "s/.*.a href=.//" -e "s/..Study Data.*//")
+
+# Follow the link
+curl -s $URL \
+  -b $ADNIDB_ROOT/instance/secrets/loni_cookie.txt \
+  > $ADNIDB_ROOT/instance/scratch/page2.txt
+
+# Get the auth-key
+AUTHKEY=$(cat $ADNIDB_ROOT/instance/scratch/page2.txt | grep '&authKey=[^\"]*' | sed -e "s/.*=//" -e "s/\";//")
+USERID=$(cat $ADNIDB_ROOT/instance/scratch/page2.txt | grep '&userId=' | sed -e "s/.*=//" -e "s/\".*//")
+
+# Read all the individual entries
+<<'SKIP'
+mkdir -p $ADNIDB_ROOT/instance/ADNI
+for ROW in $(cat $ADNIDB_ROOT/ADNI_ID_corr.csv | awk 'NR > 1 {print $1}'); do
+
+  CSV_NAME=$(echo $ROW | awk -F, '{print $1}')
+  CSV_ID=$(echo $ROW | awk -F, '{printf "%s",$2}')
+
+  echo "Downloading $CSV_NAME VIA $CSV_ID"
+  curl -s -d userId=${USERID} -d authKey=${AUTHKEY} -d fileId=$CSV_ID -d type=GET_FILES \
+    -o $ADNIDB_ROOT/instance/ADNI/${CSV_NAME}.csv \
+    https://utilities.loni.usc.edu/download/study &
+
+done
+SKIP
+
+# Download the data dictionary into the meta directory
+mkdir -p $ADNIDB_ROOT/instance/savefile/meta
+curl -s -d userId=${USERID} -d authKey=${AUTHKEY} -d fileId=83 -d type=GET_FILES \
+  -o $ADNIDB_ROOT/instance/savefile/meta/DATADIC.csv \
+  https://utilities.loni.usc.edu/download/study &
+
+# Wait for all child processes
+wait

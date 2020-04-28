@@ -1,0 +1,108 @@
+<div><p>
+	In this page you can merge a spreadsheet with other data such as demographic information,
+	diagnosis information or MMSE score.
+</p></div>
+<div id="merger">
+	<form method="POST" class="pure-form" enctype="multipart/form-data" action=""> 
+		<label for="myfile">Donwload your own spreadsheet:</label>
+		<input id="myfile" type="file" name="myfile" class="pure-input-rounded" onChange="dl()" value="default" required />
+		<label id="labeldatedl" for="datedl" hidden>Write the name of the date variable (if multiple, separate them with ';'):</label>
+		<input name="datedl" id="datedl" hidden required></select>
+		</br>OR</br>
+		<label for="dbfilemerge">Choose a spreadsheet from the database:    </label>
+		<select name="dbfilemerge" id="dbfilemerge" onChange="select(); datevar()" required >
+			<option value="default">Choose the spreadsheet</option>
+		</select>
+		<label id="labeldatedb" for="datedb" hidden>Choose a date variable (you can select multiple variables):</label>
+		<select name="datedb" id="datedb" required hidden>
+			<option value="default"></option>
+		</select></br>
+		<input type="checkbox" name="mergewith" value="demog"/> Add Demographic information</br>
+		<input type="checkbox" name="mergewith" value="dx"/> Add Diagnosis and MMSE information</br></br>
+		<input type="submit" class="pure-button" /> 							
+	</form>
+</div>
+
+<script>
+	function dl(){
+		var current = document.getElementById("myfile");
+		if (current.value != ""){
+			document.getElementById("dbfilemerge").disabled = true;
+			document.getElementById("dbfilemerge").required = false;
+			
+			document.getElementById("datedb").disabled = true;
+			document.getElementById("datedb").required = false;
+			
+			document.getElementById("labeldatedl").hidden = false;
+			document.getElementById("datedl").hidden = false;			
+		}else{
+			document.getElementById("dbfilemerge").disabled = false;
+			document.getElementById("dbfilemerge").required = true;
+			
+			document.getElementById("datedb").disabled = false;
+			document.getElementById("datedb").required = true;
+			
+			document.getElementById("labeldatedl").hidden = true;
+			document.getElementById("datedl").hidden = true;			
+		}
+	}
+	
+	function select(){
+		var current = document.getElementById("dbfilemerge");
+		if (current.value != "default"){
+			document.getElementById("myfile").disabled = true;
+			document.getElementById("myfile").required = false;
+			
+			document.getElementById("datedl").disabled = true;
+			document.getElementById("datedl").required = false;
+			
+			document.getElementById("labeldatedb").hidden = false;
+			document.getElementById("datedb").hidden = false;
+		}else{
+			document.getElementById("myfile").disabled = false;
+			document.getElementById("myfile").required = true;
+			
+			document.getElementById("datedl").disabled = false;
+			document.getElementById("datedl").required = true;
+
+			document.getElementById("labeldatedb").hidden = true;
+			document.getElementById("datedb").hidden = true;			
+		}	
+	}
+	
+	function datevar(){
+		var current = document.getElementById("dbfilemerge");
+		var selectdate = document.getElementById("datedb");
+		for(i = selectdate.options.length-1; i>=0; i--){selectdate.remove(i);}
+		if (current.value != "default"){
+			csvname = current.value;
+				jQuery.ajax({
+				type:'post',
+				url:'/temp/merge/datevar',
+				cache:false,
+				data:{"csvname":csvname},
+				success: function(answer) {
+					if (answer != "[]"){
+						l = answer.split(", ");
+						for (i in l){
+							var datevar = l[i].replace(/\'/g,'').replace(/\[/,'').replace(/\]/,'');
+							var newOp = document.createElement("option");
+							newOp.setAttribute('value', datevar);
+							newOp.appendChild(document.createTextNode(datevar));
+							selectdate.appendChild(newOp);
+						}
+						
+						if (l.length>1){
+							selectdate.multiple = true;
+						}else{
+							selectdate.multiple = false;
+						}
+					}
+				},
+				error: function(request, status, error) {
+					console.log('error');
+				}
+			});
+		}
+	}
+</script>

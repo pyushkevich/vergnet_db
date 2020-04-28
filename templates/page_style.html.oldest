@@ -1,0 +1,271 @@
+$def with(type,subpage=None,form=None,text=None)
+
+$def logver(type,subpage):
+	$ ref = '/login/'+type+subpage	
+	<p>
+	You are not logged in.</br>
+	Please <a href=$ref>Sign in</a>
+	</p>
+
+$def info_update():
+	$if session.info_update=='': 
+		""
+	$elif session.info_update["nodes_created"]!=0 and session.info_update["relationships_created"]!=0:
+		$session.info_update["nodes_created"] nodes created and
+		$session.info_update["relationships_created"] relationships created 
+		in $session.info_update["exectime"] ms.
+	$else:
+		No new data added.
+
+$def semiauto_info_update():
+	$if session.semiauto_info_update=='': 
+		""
+	$elif session.semiauto_info_update[0]!=0:
+		$session.semiauto_info_update[0] has been updated over $session.semiauto_info_update[1].
+	$else:
+		No update.
+		
+<!DOCTYPE html>
+<html>
+	<head profile="http://www.w3.org/2005/10/profile">
+		<meta charset="utf-8" />
+		<title>ADNI Database</title>
+		<link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous">
+		<!--[if lte IE 8]>
+			<link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/grids-responsive-old-ie-min.css">
+		<![endif]-->
+		<!--[if gt IE 8]><!-->
+			<link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/grids-responsive-min.css">
+		<!--<![endif]-->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+		<link rel="stylesheet" type="text/css" href="/static/style/test.css">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script type="text/javascript" src="/static/js/htmltable2csv.js"></script>
+		<script type="text/javascript" src="/static/js/printquery.js"></script>
+		<script type="text/javascript" src="/static/js/menuactive.js"></script>		
+		<script type="text/javascript" src="/static/js/query_builder.js"></script>
+		<script type="text/javascript" src="/static/js/about.js"></script>
+		<script type="text/javascript" src="/static/js/semiauto_update.js"></script>
+		$#<script type="text/javascript" src="/static/js/menu.js"></script>
+		$#<link rel="icon" type="image/png" href="/static/favicon.ico">
+		<script>				
+		</script>
+		<style>
+		
+		</style>
+	</head>	
+	<body>
+		<header>
+			<div id="header-info">
+				<div id="header-text">
+					<h1>Welcome to ADNI Database</h1>
+					<p>This a website where you can access to data of the ADNI database, using query sample or by building your own query.</p>
+				</div>
+				<div id="logo-picsl">
+					<a id="home_logo" title="PICSL" href="http://picsl.upenn.edu"></a>
+				</div>
+			</div>		
+		</header>
+		<div id="menu">
+			<div class="pure-menu pure-menu-horizontal custom-restricted-width">
+				<a href="/#" class="pure-menu-heading">ADNI Database</a><!--
+				--><ul class="pure-menu-list"><!--				
+					--><li class="pure-menu-item">
+						<a href="/" class="pure-menu-link" id="index">Home</a>
+					</li><!--						
+					$if not session.logged_in:
+						--><li class="pure-menu-item">
+							<a href="/login" class="pure-menu-link" id="login">Login</a>
+						</li><!--	
+					$if session.logged_in:
+						--><li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+							<a href="/db_update" class="pure-menu-link" id="db_update">Database update</a>
+							<ul class="pure-menu-children">
+								<li class="pure-menu-item">
+									<a href="/db_update/auto" class="pure-menu-link">Automatic database update</a>
+								</li>
+								<li class="pure-menu-item">
+									<a href="/db_update/semiauto" class="pure-menu-link">Semi-automatic database update</a>
+								</li>
+								<li class="pure-menu-item">
+									<a href="/db_update/manual" class="pure-menu-link">Manual database update</a>
+								</li>
+							</ul>
+						</li><!--
+						--><li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+							<a href="/query" class="pure-menu-link" id="query">Query</a>
+							<ul class="pure-menu-children">
+								<li class="pure-menu-item">
+									<a href="/query/sample" class="pure-menu-link">Query sample</a>
+								</li>
+								<li class="pure-menu-item">
+									<a href="/query/builder" class="pure-menu-link">Query builder</a>
+								</li>
+							</ul>
+						</li><!--
+					--><li class="pure-menu-item">
+						<a href="/about" class="pure-menu-link" id="about">About</a>
+					</li><!--						
+					$if session.logged_in:
+						--><li class="pure-menu-item">
+							<a href="/logout" class="pure-menu-link">Logout</a>
+						</li><!--
+				--></ul>
+			</div>
+		</div>	
+		<div id="main" class=$type>
+			$if type=='index':
+				$:text
+				$if session.logged_in:
+					<h2>You are signed in as $session.username.</h2>					
+			$elif type=='db_update':
+				$if not session.logged_in:
+					$:logver(type,subpage)					
+				$else:
+					$if subpage=='' or subpage=='/' :
+						<a href='/db_update/auto'>Automatic database update</a></br>
+						<a href='/db_update/semiauto'>Semi-automatic database update</a></br>
+						<a href='/db_update/manual'>Manual database update</a>										
+					$if subpage=='/auto':	
+						<p>
+							##To Do##</br>
+							Do a javascript which check into ADNI</br>
+							Color code for successful, failed or not new data
+						</p>
+					$if subpage=='/semiauto':
+						<div>	
+							<h2>Semi-automatic file update of the database</h2>
+							$if session.semiauto_info_update!='':
+								$:semiauto_info_update()
+						</div>
+						<div id="form-semiauto">
+							<div class="pure-g">
+								<div class="pure-u-1 pure-u-md-1-12 button-semi">
+									<button class="pure-button" onclick="selectAll()">Select all</button>
+								</div>
+								<div class="pure-u-1 pure-u-md-1-12 button-semi">
+									<button class="pure-button" onclick="unselectAll()">Unselect all</button>
+								</div>
+							</div>
+							<form method="POST" class="pure-form" enctype="multipart/form-data" action="">
+							<fieldset id="field-sa">
+								<div id="submit-sa">
+									<button type="submit" class="pure-button">Submit</button>
+								</div>
+							</fieldset>
+							</form>
+						</div>					
+					$if '/manual' in subpage:	
+						<div id="text-manual">
+							<h2>Manual file update of the database</h2>
+							$:text
+						</div>
+						$if session.last_uploaded_file != '' :
+							<div id="Last_uploaded_file">
+								<p>File $session.last_uploaded_file has been successfuly added to the database.</br>
+									$info_update()
+								</p>						
+							</div>
+						<div id="File_input">	
+							<form method="POST" class="pure-form" enctype="multipart/form-data" action=""> 
+								<input type="file" name="myfile" class="pure-input-rounded" required />
+								<input type="submit" class="pure-button" /> 							
+							</form>
+						</div>			
+			$elif type=='query':
+				$if not session.logged_in:
+					$:logver(type,subpage)					
+				$else:
+					$if subpage=='' or subpage=='/':
+						<a href='/query/sample'>Query sample</a></br>
+						<a href='/query/builder'>Query builder</a>						
+					$if subpage=='/sample':
+						<h1>Select the query you want to do</h1>
+						$:text
+						<form name="querySampleForm" class="pure-form" method="post"> 
+							$:form.render()
+						</form>
+						<p id="query_intro"></p>
+						<table id="query_table">
+							<tr><td id="query_text"></td></tr>
+						</table>						
+					$if subpage=='/result':
+						<div id="info_sample">
+							<h3>
+								Result for: $session.result[1]
+							</h3>
+							<!--<button class="pure-button pure-button-primary" onClick="toCsv();">Export to CSV</button>
+							<button class="pure-button pure-button-primary" onClick="toTsv();">Export to TSV</button>-->
+							<a href="/savefile/result/final_result.csv" download="Query_result.csv">Export to CSV</a>
+							<a href="/savefile/result/final_result.tsv" download="Query_result.tsv">Export to TSV</a>			
+							</br></br>
+						</div>
+						<div id="result_tbl" style="overflow-x: auto;">
+						$:session.result[0]	
+						</div>
+					$elif subpage=='/builder':
+						$:text		
+			$elif type=='login':
+				<h1>Sign in ADNI database</h1>				
+				<form name="loginForm" method="post" class="pure-form pure-form-aligned">
+					<fieldset>
+						$if not form.valid: 
+							<p class="error">Your email or password is invalid</p>
+						<div class="pure-control-group">
+							<label for="Email">Email Address</label>
+							$:form.Email.render()
+						</div>
+						<div class="pure-control-group">
+							<label for="Password">Password</label>
+							$:form.Password.render()
+						</div>
+						<div class="pure-controls">
+							<button type="submit" class="pure-button pure-button-primary">Login</button> 
+						</div>
+					</fieldset>
+				</form>				
+			$elif type=='about':
+				<div>
+					<h2>About the ADNI database</h2>
+					<p>
+						This website is entirely made in python, using <a href="http://webpy.org/">web.py</a> framework. </br>
+						This website belongs to <a href="http://picsl.upenn.edu">PICSL: Penn Image Computing & Science Lab</a> and may only be used by PISCL members. </br>
+						The database is hosted by <a href="https://neo4j.com/">Neo4j</a> and all spreadshits belongs to <a href="http://adni.loni.usc.edu/">ADNI: Alzheimer's Disease Neuroimaging Initiative</a>.
+					</p>
+				</div>
+				$if session.logged_in:
+					<div class="pure-g">
+						<div id="csv-imported" class="pure-u-1 pure-u-md-1-2">
+							<p>CSV file imported in the database:</p>
+							<ul id="list-csv">
+							</ul>
+						</div>
+						<div id="db-info" class="pure-u-1 pure-u-md-1-2">
+							<p>Database information:</p>
+							<ul id="info-db">
+							</ul>
+						</div>
+					</div>
+		</div>	
+		<footer></footer>	
+		<script>
+window.onscroll = function() {stickyMenu()};
+var navbar = document.getElementById("menu");
+var sticky =$$('#logo-picsl').outerHeight(true); 
+
+function stickyMenu() {
+	if (window.pageYOffset >= sticky) {
+		navbar.classList.add("sticky")
+	} else {
+		navbar.classList.remove("sticky");
+	}
+}
+
+window.onload = menuActive();
+window.onload = loadAbout();
+window.onload = loadForm();
+window.onload = loadBuilderInfo();
+		</script>
+	</body>
+</html>

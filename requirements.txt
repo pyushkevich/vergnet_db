@@ -1,0 +1,9 @@
+flup
+web.py
+prettytable
+py2neo
+uwsgi
+neo4j
+httplib2
+oauth2client
+google-api-python-client

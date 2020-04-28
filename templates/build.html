@@ -1,0 +1,124 @@
+<style>
+.collapsed{
+	display: none;
+}
+
+</style>
+<div><p>
+	In this page you can easily make your own query. Give it a try!
+	</br></br>
+	Tips:</br>
+		- Don't include the field "ID" multiple times;</br>
+		- If you want to include the Diagnosis, the main spreadsheet must have a SCANDATE variable;</br>
+		- Don't include any DXCHANGE/DXCURRENT/DIAGNOSIS from a spreadsheet, always use the built in "Add Diagnosis information";</br>
+		- If you decide to merge one spreadsheet with nothing, it will only merge with the RID.
+</p></div>
+<div id="qbuilder">
+	<form name="queryBuilderForm" class="pure-form pure-form-aligned" method="post">
+		<fieldset>
+			<legend>Choose the spreadsheets</legend>
+			<div id="step1">
+				<span id="spanmajor">Main: <select id="major" name="major" onchange="properties_maj(this.id); disable()">
+					<option value="default">Select the main spreadsheet</option>
+				</select></span>
+				<span id="spanoptional">Merged with: <select id="optional" name="optional" onchange="data_opt(this.id); disable()" multiple></select></span>
+				</br></br>
+				<button type="button" id="step1done" class="pure-button" onclick="done(this.id)" disabled>Done</button>	
+			</div>
+		</fieldset>
+			
+		<fieldset>
+			<legend>Choose the data</legend>
+			<div id="step2" class="collapsed">
+				<span id="spanmajorOp">Main spreadsheet data: <select id="majorOp" name="majorOp" onchange="subButton(); disable()" multiple></select></span></br></br>
+				<button type="button" id="step2previous" class="pure-button" onclick="previous(this.id)">Previous</button>
+				<button type="button" id="step2done" class="pure-button" onclick="done(this.id)" disabled>Done</button>
+			</div>
+		</fieldset>
+		
+		<fieldset>
+			<legend>Merging criteria</legend>
+			<div id="step3" class="collapsed">
+				<span id="spanmerge">Main spreadsheet information for merging: Date variable: <select id="majdatesel" name="majdatesel"></select> Visit code variable: <select id="majviscodesel" name="majviscodesel"></select>
+				</span></br></br>
+				<button type="button" id="step3previous" class="pure-button" onclick="previous(this.id)">Previous</button>
+				<button type="button" id="step3done" class="pure-button" onclick="done(this.id)" disabled>Done</button>
+			</div>
+		</fieldset>
+		
+		<fieldset>
+			<legend>Standard info</legend>
+			<div id="step4" class="collapsed">
+				<span id=""><input type="checkbox" name="stdinfo" value="demog"/> Add Demographic information</br>
+				<input type="checkbox" name="stdinfo" value="dx"/> Add Diagnosis</span></br></br>
+				<button type="button" id="step4previous" class="pure-button" onclick="previous(this.id)">Previous</button>
+			</div>
+		</fieldset>
+
+		<button id="build" type="submit" class="pure-button" disabled>Submit</button>
+		
+	</form>
+</div>
+
+<script>
+function done(id){
+	id = id.slice(0,-4)
+	var idnext = id.slice(0,-1) + (parseInt(id.slice(-1))+1).toString();
+	var field = document.getElementById(id);
+	var fieldnext = document.getElementById(idnext);
+	
+	if (fieldnext.style.display == "block"){
+		field.style.display = "block";
+		fieldnext.style.display = "none";
+	}else{
+		field.style.display = "none";
+		fieldnext.style.display = "block";
+	}
+}
+
+function previous(id){
+	id = id.slice(0,-8)
+	var idpre = id.slice(0,-1) + (parseInt(id.slice(-1))-1).toString();
+	var field = document.getElementById(id);
+	var fieldnext = document.getElementById(idpre);
+	
+	if (fieldnext.style.display == "block"){
+		field.style.display = "block";
+		fieldnext.style.display = "none";
+	}else{
+		field.style.display = "none";
+		fieldnext.style.display = "block";
+	}
+}
+
+function disable(){
+	//step 1 done button
+	var selmaj = $('#major option:selected').length;
+	var selop = $('#optional option:selected').length;
+	var button1 = document.getElementById("step1done");
+	if (selmaj>0 && selop>0){button1.disabled=false;}
+	else{button1.disabled=true;}
+	
+	//step 2 done button
+	var step2 = (true && $('#majorOp option:selected').length > 0);
+	var numSpan2 = document.getElementById("step2").getElementsByTagName("SPAN").length;
+	for (i = 0; i < numSpan2-1; i++){
+		var op = "#optional" + i.toString() + "Op option:selected";
+		step2 = (step2 && $(op).length > 0);
+	}
+	var button2 = document.getElementById("step2done");
+	if (step2){button2.disabled=false;}
+	else{button2.disabled=true;}
+	
+	//step 3 done button
+	var step3 = (true && $('#majdatesel option:selected').length > 0 && $('#majviscodesel option:selected').length > 0);
+	var numSpan3 = document.getElementById("step3").getElementsByTagName("SPAN").length;
+	for (i = 0; i < numSpan3-1; i++){
+		var op = "#merge" + i.toString() + " option:selected";
+		step3 = (step3 && $(op).length > 0);
+	}
+	var button3 = document.getElementById("step3done");
+	if (step3){button3.disabled=false;}
+	else{button3.disabled=true;}
+}
+</script>

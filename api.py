@@ -85,7 +85,8 @@ s = web.session.Session(                    #def a session to stock log info
         'query':'',
         'queryshow':'',
         'querytbl':'',
-        'queryinf':''})
+        'queryinf':'',
+        'temp_tables':set() })
 
 # Enable automatic login (for testing purposes)
 if os.environ.get('ADNIDB_AUTO_LOGIN', None) is not None:
@@ -332,6 +333,15 @@ class Query:
             return render.page_style('query',subpage=args,form=qf,text=list_query())
         
         if args=='/result':
+
+            # Time to delete the temporary tables!
+            for ttab in s.temp_tables:
+                del_merge(ttab)
+                filedir = [ config['ADNIDB_IMPORT_SAVEDIR'], config['ADNIDB_NEO4J_IMPORT'] ]
+                for dir in filedir:
+                    os.remove("%s/%s_temp.csv" % (dir, ttab))
+            s.temp_tables = set()
+
             return render.page_style('query',subpage=args)
 
         if args=='/csv':
@@ -385,20 +395,20 @@ class Query:
             qOptional = dict()
             qMajor = dict()
             qMerge = dict()
-            w = web.input(major="", majorOp=[], optional=[], optional0Op=[], optional1Op=[], 
+            w = web.input(major="", major_table="", majorOp=[], optional=[], optional0Op=[], optional1Op=[], 
                 optional2Op=[], optional3Op=[], optional4Op=[], optional5Op=[], optional6Op=[],
                 optional7Op=[], stdinfo =[])
                 
             keys=list(w.keys())
             mergetemp = dict()
-            qMajor[w.major] = w.majorOp
+            qMajor[w.major_table] = w.majorOp
             
             if ('majdatesel' in keys): mergetemp['date'] = w.majdatesel
             else: mergetemp['date'] = ""
             if ('majviscodesel' in keys): mergetemp['viscode'] = w.majviscodesel
             else: mergetemp['viscode'] = ""    
                 
-            qMerge[w.major] = mergetemp
+            qMerge[w.major_table] = mergetemp
 
             for i, op in enumerate(w.optional):
                 qOptional[op] = w["optional" + str(i) + "Op"]
@@ -415,7 +425,15 @@ class Query:
             s.queryshow = query_upper(q)
             s.querytbl = tbl
             s.queryinf = info
-        
+
+            # Also store the temporary table to delete
+            if w.major_table.startswith("tmp_"):
+                print(s.temp_tables, type(s.temp_tables), {w.major_table}, type({w.major_table}))
+                if len(s.temp_tables) > 0:
+                    s.temp_tables = s.temp_tables | { w.major_table }
+                else:
+                    s.temp_tables = { w.major_table }
+
             raise web.seeother('/query/show')
             
         if args=='/merge':
@@ -426,7 +444,7 @@ class Query:
             if w['myfile']!={}:
                 dates = [x.strip() for x in w['datedl'].split(';')]
                 
-                filename=upload_file(w,filedir,local_name="T" + uuid.uuid4().hex)
+                filename=upload_file(w,filedir,local_name="tmp_" + uuid.uuid4().hex)
                 input = filename.replace('.csv','')
                 preprocess(filename,filedir)
                 filename=filename.replace('.csv','_temp.csv')
@@ -583,6 +601,32 @@ class Temp:
                 if (x.type == "date"): vars = [x for x in labels if ("SCANDATE" in x.upper())]
                 else: vars = [x for x in labels if ("VISCODE2" in x.upper())]
                 return json.dumps(vars)
+
+            if "upload" in args:
+                w=web.input(myfile={})
+                filedir = [ config['ADNIDB_IMPORT_SAVEDIR'], config['ADNIDB_NEO4J_IMPORT'] ]
+
+                if w['myfile']!={}:
+                    
+                    # Assign the spreadsheet a temporary name
+                    temp_name = "tmp_" + uuid.uuid4().hex
+
+                    # Upload the file and add to database
+                    filename=upload_file(w,filedir,local_name=temp_name)
+                    preprocess(filename,filedir)
+                    filename=filename.replace('.csv','_temp.csv')
+                    quoteCSV(filename, filedir)
+                    info = update_database([filename])
+                    if "TAUMETA" in filename: dx_haschanged(info)
+
+                    properties = prop(temp_name)
+                    properties.remove('RID')
+                    datevars=[x for x in properties if ("SCANDATE" in x.upper())]
+                    visvars=[x for x in properties if ("VISCODE2" in x.upper())]
+                    return json.dumps({'label': temp_name, 'date':datevars, 'viscode':visvars, 'prop':properties})
+
+                else:
+                    return None
                 
         if "merge" in args:    
             if "datevar" in args:

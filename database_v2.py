@@ -191,10 +191,13 @@ def del_merge(filename):
     q2="DROP INDEX ON :{}(RID, VISCODE2)".format(filename)
     tx.run(q1)
     tx.commit()
-    tx=graph.begin()
-    tx.run(q2)
-    tx.commit()    
-    
+    try:
+        tx=graph.begin()
+        tx.run(q2)
+        tx.commit()    
+    except Exception as e:
+        pass
+   
     #return either entire information about the db or all the db labels
 def db_info(arg):
     if arg=="about":

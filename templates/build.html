@@ -18,10 +18,26 @@
 		<fieldset>
 			<legend>Choose the spreadsheets</legend>
 			<div id="step1">
-				<span id="spanmajor">Main: <select id="major" name="major" onchange="properties_maj(this.id); disable()">
-					<option value="default">Select the main spreadsheet</option>
-				</select></span>
-				<span id="spanoptional">Merged with: <select id="optional" name="optional" onchange="data_opt(this.id); disable()" multiple></select></span>
+        <ul>
+        <li id="spanmajor">Main Spreadsheet:</li>
+        <ul>
+        <li>
+          <label for="myfile">Upload your own spreadsheet:</label>
+          <input id="myfile" type="file" name="myfile" class="pure-input-rounded" 
+                 onChange="upload_maj(this.id)" value="default" required />
+          <input id="major_table" name="major_table" type="hidden" value=""/>
+        </li> - or -
+        <li>
+          <label for="major">Select existing spreadsheet:</label>
+          <select id="major" name="major" onchange="properties_maj(this.id); disable()">
+					  <option value="default">Select the main spreadsheet</option>
+          </select>
+        </li>
+        </ul>
+				<li id="spanoptional">
+          Merged with: <select id="optional" name="optional" onchange="data_opt(this.id); disable()" multiple></select>
+        </li>
+        </ul>
 				</br></br>
 				<button type="button" id="step1done" class="pure-button" onclick="done(this.id)" disabled>Done</button>	
 			</div>

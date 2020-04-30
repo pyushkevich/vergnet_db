@@ -13,6 +13,7 @@ from custom_query import query_builder, merge, info_builder
 import prettytable 
 from csv_preprocessing import preprocess, tsv2csv, FDG_preprocess, quoteCSV, summary_preprocess
 import zipfile
+import uuid
 #from test import test_ajax
 
 ##Globals
@@ -134,17 +135,25 @@ def query_upper(q):
     return q
 
 #function to upload files
-def upload_file(file,filedir):
+def upload_file(file,filedir,local_name=None):
     if 'myfile' in file: # to check if the file-object is created
         filepath=file.myfile.filename.replace('\\','/') # replaces the windows-style slashes with linux ones.
-        filename=filepath.split('/')[-1] # splits the and chooses the last part (the filename with extension)
+        filepath_base,filepath_ext = os.path.splitext(filepath)
+
+        # Store either using the uploaded filename or user-passed in filename
+        filename = filepath.split('/')[-1] if local_name is None else local_name + filepath_ext
+
         newfilepath=dir_path +'/tempfiles/'+ filename
         newfilepath=newfilepath.replace('\\','/') # replaces the windows-style slashes with linux ones.
         newfilename=newfilepath.split('/')[-1] # splits the and chooses the last part (the filename with extension)
         if not os.path.isdir(dir_path + '/tempfiles'):
             os.makedirs(dir_path + '/tempfiles')
         
+        # Read the uploaded file
         file=file.myfile.file.read()
+
+        # Writes the file to a new filename
+        print('Saving uploaded file to ', newfilepath)
         fout = open(newfilepath,'wb') # creates the file where the uploaded file should be stored
         fout.write(file) # writes the uploaded file to the newly created file.
         fout.close() # closes the file, upload complete.
@@ -407,7 +416,8 @@ class Query:
             filedir = [ config['ADNIDB_IMPORT_SAVEDIR'], config['ADNIDB_NEO4J_IMPORT'] ]
             if w['myfile']!={}:
                 dates = [x.strip() for x in w['datedl'].split(';')]
-                filename=upload_file(w,filedir)
+                
+                filename=upload_file(w,filedir,local_name="T" + uuid.uuid4().hex)
                 input = filename.replace('.csv','')
                 preprocess(filename,filedir)
                 filename=filename.replace('.csv','_temp.csv')

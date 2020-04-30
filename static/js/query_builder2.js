@@ -75,11 +75,38 @@ function loadBuilderInfo_builder(){//id){
 	});
 }
 
+function upload_maj(id) {
+  var input = document.getElementById(id)
+  var file = input.value;
+  if (input.files && input.files.length===1)
+  {
+    var form_data = new FormData();
+    var file = input.files[0];
+    form_data.set("myfile", file , file.name);
+    $.ajax({
+      type: "POST",
+      enctype: 'multipart/form-data',
+      url: "/temp/build_info/upload",
+      data: form_data,
+      processData: false,
+      contentType: false,
+      cache: false,
+      timeout: 600000,
+      success: function(answer) {
+        result = JSON.parse(answer);
+        callback_maj(result, document.getElementById('majorOp'), result.label);
+        document.getElementById("major").value = "default";
+      }
+    });
+  }
+}
+
 function properties_maj(id, callback = callback_maj) {
 	var sel = document.getElementById(id);
 	var val = sel.options[sel.selectedIndex].value;
 	var txt = sel.options[sel.selectedIndex].text;
 	var varop = document.getElementById(id+"Op");
+  console.log("VAROP", varop, id)
 	
 	selop = document.getElementById('optional');
 	for (i = selop.options.length-1; i>=0; i--){selop.options[i].disabled = false;}
@@ -96,21 +123,10 @@ function properties_maj(id, callback = callback_maj) {
 				if (answer != "{}"){
 					temp = JSON.parse(answer);
 					callback(temp, varop, val);
-					/* dates = temp["date"];
-					viscodes = temp["viscode"];
-					temp = temp["prop"]
-					
-					for (x in temp){
-						var prop = temp[x];
-						var opprop = document.createElement("option");
-						opprop.setAttribute("value",prop);
-						opprop.innerHTML = prop;
-						varop.appendChild(opprop);
-					}
-					
-					var selector = 'span#spanoptional option[value=' + val + ']';
-					document.querySelector(selector).disabled = true;
-					mergeOption(dates, viscodes); */
+          // Clear the file upload field
+          if(id === "major") {
+            document.getElementById("myfile").value = null;
+          }
 				}
 			},
 			error: function(request, status, error){console.log('error');}
@@ -123,6 +139,11 @@ function callback_maj(temp, varop, val){
 	viscodes = temp["viscode"];
 	temp = temp["prop"]
 
+  var length = varop.options.length;
+  for (i = length-1; i >= 0; i--) {
+    varop.options[i] = null;
+  }
+
 	for (x in temp){
 		var prop = temp[x];
 		var opprop = document.createElement("option");
@@ -132,7 +153,14 @@ function callback_maj(temp, varop, val){
 	}
 
 	var selector = 'span#spanoptional option[value=' + val + ']';
-	document.querySelector(selector).disabled = true;
+  var qsel = document.querySelector(selector);
+  if(qsel)
+    qsel.disabled = true;
+
+  // Set the hidden input
+  var majsel = document.getElementById('major_table');
+  majsel.value = val;
+
 	mergeOption(dates, viscodes);
 }
 

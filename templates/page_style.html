@@ -47,6 +47,7 @@ $def semiauto_info_update():
         <script type="text/javascript" src="/static/js/query_builder2.js"></script>
         <script type="text/javascript" src="/static/js/about.js"></script>
         <script type="text/javascript" src="/static/js/semiauto_update.js"></script>
+        <script type="text/javascript" src="/static/js/del_spreadsheet.js"></script>
         <script type="text/javascript" src="/static/zip/dist/jszip.js"></script>
         <script src="https://combinatronics.com/eligrey/FileSaver.js/master/dist/FileSaver.js"></script>
         $#<link rel="icon" type="image/png" href="/static/favicon.ico">
@@ -80,6 +81,9 @@ $def semiauto_info_update():
                                 </li>
                                 <li class="pure-menu-item">
                                     <a href="/db_update/dl_spreadsheet" class="pure-menu-link">Download spreadsheets</a>
+                                </li>
+                                <li class="pure-menu-item">
+                                    <a href="/db_update/del_spreadsheet" class="pure-menu-link">Delete spreadsheets</a>
                                 </li>
                             </ul>
                         </li><!--
@@ -125,13 +129,19 @@ $def semiauto_info_update():
                     $if subpage=='' or subpage=='/' :
                         <p>
                             <a href='/db_update/manual'>Upload spreadsheets</a></br>
-                            <a href='/db_update/dl_spreadsheet'>Download spreadsheets</a>
+                            <a href='/db_update/dl_spreadsheet'>Download spreadsheets</a></br>
+                            <a href='/db_update/del_spreadsheet'>Delete spreadsheets</a>
                         </p>
                     $if subpage=='/dl_spreadsheet':
                         <div>    
                             <h2>Download spreadsheets from the database</h2>
                         </div>
-                        $:text        
+                        $:text 
+                    $if subpage=='/del_spreadsheet':
+                        <div>    
+                            <h2>Download spreadsheets from the database</h2>
+                        </div>
+                        $:text      
                     $if subpage=='/manual':    
                         <div id="text-manual">
                             <h2>Manual file update of the database</h2>
@@ -240,6 +250,7 @@ function stickyMenu() {
 window.onload = menuActive();
 window.onload = loadAbout();
 window.onload = loadForm();
+window.onload = loadDelForm();
 
 if (url.includes("builder")){window.onload = loadBuilderInfo_builder();}
 if (url.includes("merge")){window.onload = loadBuilderInfo("dbfilemerge");}

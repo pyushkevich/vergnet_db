@@ -16,6 +16,15 @@ import zipfile
 import uuid
 #from test import test_ajax
 
+##Read the core spreadsheets from ADNI
+ADNICoreCSV = []
+with open('ADNI_ID_corr.csv') as file:
+    csvReader = csv.reader(file)
+    # skip the header (first row)
+    next(csvReader)
+    for row in csvReader:
+        ADNICoreCSV.append(row[0])
+
 ##Globals
 web.config.debug = False
 email_re='(?:[a-z0-9!#$%&\'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&\'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])'
@@ -482,6 +491,9 @@ class Update:
         if args=='/dl_spreadsheet':
             return render.page_style('db_update',subpage=args,text=read_text('download_db'))
         
+        if args=='/del_spreadsheet':
+            return render.page_style('db_update',subpage=args,text=read_text('del_spreadsheet'))
+        
         return render.page_style('db_update',subpage=args)
     
     def POST(self,args):
@@ -521,12 +533,22 @@ class Temp:
             csvfiles = sorted(csvfiles)
             info = db_info("about")
             return csvfiles,info
-            
+        
         if "dl_spreadsheet" in args:
             csvfiles = [f for f in os.listdir(dir_path+"/savefile/") if os.path.isfile(os.path.join(dir_path+"/savefile/", f))]
             csvfiles = sorted(csvfiles)
             return csvfiles
-            
+        
+        if "del_spreadsheet" in args:
+            csvfiles = []
+            for f in os.listdir(dir_path+"/savefile/"):
+                filename = f.replace('_temp.csv','')
+                if os.path.isfile(os.path.join(dir_path+"/savefile/", f)) and not ( filename in ADNICoreCSV):
+                    csvfiles.append(f)
+            csvfiles = sorted(csvfiles)
+            print(csvfiles)
+            return csvfiles
+        
         if "build_info" in args:
             if "label" in args:
                 temp = db_info("build_info")
@@ -591,6 +613,25 @@ class Temp:
             web.header('Content-type','application/zip')
             web.header('Content-transfer-encoding','binary') 
             return open(zip, 'rb').read()
+        
+        if "del_spreadsheet" in args:
+            filedir = [ config['ADNIDB_IMPORT_SAVEDIR'], config['ADNIDB_NEO4J_IMPORT'] ]
+            data = web.input()
+            csvlist = list(data.keys())[0]
+            csvlist = csvlist.replace('{"csvs":["','').replace('"]}','').split('","')
+            temp = dict()
+            temp['uri'] = []
+            temp['name'] = []
+            print(csvlist)
+            print('Deleting spreadsheets')
+            
+            for csvfilename in csvlist:
+                del_merge(csvfilename.replace('_temp',''))
+                for dir in filedir:
+                    print('Deleting ' + dir+'/'+csvfilename + '.csv')
+                    os.remove(dir+'/'+csvfilename + '.csv')
+            
+            
 
 application = app.wsgifunc()                            
 if __name__=="__main__":

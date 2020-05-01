@@ -230,7 +230,7 @@ function data_opt(id){
 	var values = $("#optional").val();
 
 	if (step2_inner.childElementCount > 1){
-		for(i = step2_inner.childElementCount-1; i>=1; i--){
+		for(i = step2_inner.childElementCount-1; i>=1	; i--){
 			step2_inner.children[i].remove();
 		}
 	}

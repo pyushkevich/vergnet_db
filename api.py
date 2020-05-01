@@ -310,13 +310,38 @@ class OAuthCallbackAPI:
         # Authorize via code
         user_info = OAuthHelper().authorize(auth_code)
 
-        s.email = user_info.get('email')
-        s.username = user_info.get('name')
-        s.logged_in = True
+        email = user_info.get('email')
+        username = user_info.get('name')
 
-        # Redirect to the home page
-        raise web.seeother(s.return_uri)        
-        
+        # If restricting access, use the access file
+        access_file = os.path.join(dir_path, 'access/allow.csv')
+        may_login = False
+        if os.path.exists(access_file):
+            with open(access_file) as csvfile:
+                access_reader = csv.reader(csvfile)
+                for row in access_reader:
+                    if len(row)>0 and row[0]==email:
+                        may_login = True
+                        break
+        else:
+            may_login = True
+
+        if may_login:
+            # Set the session properties
+            s.logged_in = True
+            s.email = email
+            s.username = username
+            s.logged_in = True
+
+            # Redirect to the home page
+            raise web.seeother(s.return_uri)        
+        else:
+            s.err="User not authorized"
+            s.logged_in=False
+            raise web.seeother('/')
+
+
+                        
 ##Def the log out page
 class Logout:
     def GET(self):

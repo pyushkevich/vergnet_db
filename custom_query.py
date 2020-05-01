@@ -5,6 +5,8 @@ def query_builder(qMajor, qOptional, qMerge, stdinfo):
 	optional = list(qOptional.keys())
 	tbl = [maj] + optional
 
+	print('qMajor', qMajor)
+
 	q = "match (p:Person)--(n:{})\n".format(maj)
 	withStr = "with p, n\n"
 	if qMerge[maj]['date'] != "":	q += "where n.{} <> \"\"\n".format(qMerge[maj]['date'])
@@ -87,7 +89,8 @@ def query_builder(qMajor, qOptional, qMerge, stdinfo):
 	
 	for majdata in list(qMajor[maj]):
 		if majdata in ["VISCODE2","SCANDATE"]:
-			data = "{data}_{spr}".format(data = majdata, spr = maj)
+			suffix = 'TMP' if maj.startswith('tmp_') else maj
+			data = "{data}_{spr}".format(data = majdata, spr = suffix)
 			q += "n.{} as {}, ".format(majdata, data)
 			
 		else: q += "n.{data} as {data}, ".format(data = majdata)
@@ -114,7 +117,11 @@ def query_builder(qMajor, qOptional, qMerge, stdinfo):
 	
 def info_builder(qMajor, qOptional, qMerge, stdinfo):
 	maj = list(qMajor.keys())[0]
-	info = "Find all subjects who has {} and add:".format(maj)
+
+	info = "Find all subjects who have {} and add:".format(maj)
+	if maj.startswith('tmp_'):
+		info = "List all subjects in uploaded spreadsheet and add: "
+
 	returninfo = " Return"
 	infosup = " Merged"
 

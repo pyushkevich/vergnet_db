@@ -225,12 +225,13 @@ function mergeOption(dates, viscodes){
 
 function data_opt(id){
 	var step2 = document.getElementById("step2");
+	var step2_inner = document.getElementById("step2_inner");
 	var step3 = document.getElementById("step3");
 	var values = $("#optional").val();
 
-	if (step2.childElementCount > 3){
-		for(i = step2.childElementCount-3; i>=3; i--){
-			step2.children[i].remove();
+	if (step2_inner.childElementCount > 1){
+		for(i = step2_inner.childElementCount-1; i>=1; i--){
+			step2_inner.children[i].remove();
 		}
 	}
 	
@@ -241,9 +242,10 @@ function data_opt(id){
 	}
 	
 	for (i in values){
-		var spantemp2 = document.createElement("span");
+		var spantemp2 = document.createElement("div");
+		spantemp2.className="pure-u-1 pure-u-md-1-3";
 		spantemp2.id = "spanoptional" + i + "Op";
-		spantemp2.innerHTML = values[i] + ": ";
+		spantemp2.innerHTML = values[i] + ": <br>";
 		
 		var seltemp2 = document.createElement("select");
 		seltemp2.id = "optional" + i + "Op";
@@ -276,10 +278,11 @@ function data_opt(id){
 		
 		
 		spantemp2.appendChild(seltemp2);
+		spantemp2.appendChild(document.createElement("br"));
 		var refstep2 = document.getElementById("step2previous");
-		step2.insertBefore(spantemp2, refstep2);
-		step2.insertBefore(document.createElement("br"), refstep2);
-		step2.insertBefore(document.createElement("br"), refstep2);
+		step2_inner.appendChild(spantemp2);
+		// step2_inner.insertBefore(document.createElement("br"), refstep2);
+		// step2_inner.insertBefore(document.createElement("br"), refstep2);
 		properties_opt(seltemp2.id, callback_opt, values[i]);
 		
 		spantemp3.appendChild(seltemp3);

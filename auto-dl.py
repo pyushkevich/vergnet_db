@@ -2,6 +2,8 @@ from subprocess import run
 from api import upload_file
 import os
 from csv_preprocessing import preprocess
+from csv_preprocessing import mergeLMrows
+from csv_preprocessing import quoteCSV
 from database_v2 import update_database,dx_haschanged
 
 
@@ -27,6 +29,10 @@ filedir = [config['ADNIDB_IMPORT_SAVEDIR'], config['ADNIDB_NEO4J_IMPORT']]
 print(filedir)
 
 for csv in csvfiles:
+    # For NEUROBAT, we merge the bl and sc data as logical memory scores are coming from the sc visit but they should really belong to bl, and the available data from those two visits are mutually exclusive. So merge them. Throw away USERDATE and USERDATE2 data from sc visit.
+    if "NEUROBAT" in csv:
+        mergeLMrows( dir_csv + '/' + csv , dir_csv + '/' + csv )
+        quoteCSV( csv, [ dir_csv ] ) # Add quotes, else will get SemanticError
     filename=upload_file(dir_csv+'/'+csv,filedir)
 
     preprocess(filename,filedir)

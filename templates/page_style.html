@@ -114,6 +114,7 @@ $def semiauto_info_update():
             $if type=='index':
                 <p>This a website where you can access to data of the ADNI database, using query sample or by building your own query.</p>
                 $if not session.logged_in:    
+		    <h4 style="color: red">$session.err</h4>
                     <a href="$auth_url" class="googlebutton" title="Login with Google"></a>
                 $else:
                     $:text

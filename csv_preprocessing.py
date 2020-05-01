@@ -2,6 +2,28 @@ import csv
 import re
 import os
 import time
+import pandas as pd
+
+# Merging sc and bl visits for ADNI3 scans. Copy logical memory scores to bl visit and remove sc visit
+def mergeLMrows(infile, outfile):
+   df = pd.read_csv( infile )
+
+   for index, row in df.iterrows():
+      VISCODE2=row['VISCODE2']
+      Phase=row['Phase']
+      RID=row['RID']
+      if Phase == 'ADNI3' and VISCODE2 == 'bl' :
+        scrow = df.loc[(df['RID'] == RID) & (df['VISCODE2'] == 'sc') & (df['Phase'] == 'ADNI3') ]
+        if scrow.empty == False :
+           df.at[index, 'LMSTORY'] = scrow['LMSTORY']
+           df.at[index, 'LIMMTOTAL'] = scrow['LIMMTOTAL']
+           df.at[index, 'LIMMEND'] = scrow['LIMMEND']
+           df.at[index, 'LDELBEGIN'] = scrow['LDELBEGIN']
+           df.at[index, 'LDELTOTAL'] = scrow['LDELTOTAL']
+           df.at[index, 'LDELCUE'] = scrow['LDELCUE']
+           df.drop( scrow.index, inplace = True )
+   df.to_csv( outfile, index=False)
+
 
 #preprocess csv files
 def preprocess(csvfilename,dirs):

@@ -5,10 +5,9 @@
 
 </style>
 <div><p>
-	In this page you can easily make your own query. Give it a try!
+	Merge a table or spreadsheet with one or more other tables.
 	</br></br>
 	Tips:</br>
-		- Don't include the field "ID" multiple times;</br>
 		- If you want to include the Diagnosis, the main spreadsheet must have a SCANDATE variable;</br>
 		- Don't include any DXCHANGE/DXCURRENT/DIAGNOSIS from a spreadsheet, always use the built in "Add Diagnosis information";</br>
 		- If you decide to merge one spreadsheet with nothing, it will only merge with the RID.
@@ -23,7 +22,7 @@
 						<b>Primary Spreadsheet:</b><br>
 						<label for="myfile">Upload:</label>
 						<input id="myfile" type="file" name="myfile" class="pure-input-rounded"
-							   onChange="upload_maj(this.id)" value="default" required />
+							   onChange="upload_maj(this.id)" value="default" />
 						<input id="major_table" name="major_table" type="hidden" value=""/>
 						<br>
 						<label for="major">Or select existing:</label><br>
@@ -34,7 +33,7 @@
 					<div class="pure-u-1 pure-u-md-1-3">
 						<b>Merge With:</b><br>
 						<span id="spanoptional">
-          					<select id="optional" name="optional" onchange="data_opt(this.id); disable()" multiple></select>
+          					<select id="optional" name="optional" onchange="data_opt(this.id); disable()" multiple size="6"></select>
         				</span>
 					</div>
 				</div>
@@ -48,11 +47,13 @@
 			<div id="step2" class="collapsed">
 				<div id="step2_inner" class="pure-g">
 					<div id="spanmajorOp" class="pure-u-1 pure-u-md-1-3">
-						Main spreadsheet data:<br>
-						<select id="majorOp" name="majorOp" onchange="subButton(); disable()" multiple></select>
+						Primary table:<br>
+						<select id="majorOp" name="majorOp" onchange="subButton(); disable()" multiple size="10"></select>
 					</div>
 				</div>
 				<br><br>
+				<button type="button" id="step2all" class="pure-button" onclick="select_all(this.id)">Select All</button>
+				<button type="button" id="step2none" class="pure-button" onclick="select_none(this.id)">Select None</button>
 				<button type="button" id="step2previous" class="pure-button" onclick="previous(this.id)">Previous</button>
 				<button type="button" id="step2done" class="pure-button" onclick="done(this.id)" disabled>Done</button>
 			</div>
@@ -60,9 +61,20 @@
 		
 		<fieldset>
 			<legend>Merging criteria</legend>
+			<p>Tables can be merged on date (exact, closest, etc.) or ADNI visit code.
+				Identify the primary date and visit code fields in the main table and the corresponding fields
+				in the additional tables.</p>
 			<div id="step3" class="collapsed">
-				<span id="spanmerge">Main spreadsheet information for merging: Date variable: <select id="majdatesel" name="majdatesel"></select> Visit code variable: <select id="majviscodesel" name="majviscodesel"></select>
-				</span></br></br>
+				<div id="spanmerge" class="pure-g">
+					<div class="pure-u-1 pure-u-md-1-3">
+						<b>Primary table:</b><br>
+						<label for="majdatesel">Date field:</label>
+						<select id="majdatesel" name="majdatesel"></select><br>
+						<label for="majviscodesel">Visit code field:</label>
+						<select id="majviscodesel" name="majviscodesel"></select>
+					</div>
+					<div id="step3_inner" class="pure-u-2 pure-u-md-2-3"></div>
+				</div></br></br>
 				<button type="button" id="step3previous" class="pure-button" onclick="previous(this.id)">Previous</button>
 				<button type="button" id="step3done" class="pure-button" onclick="done(this.id)" disabled>Done</button>
 			</div>
@@ -113,6 +125,16 @@ function previous(id){
 	}
 }
 
+function select_global(id, state) {
+	$('#majorOp option').prop('selected', state);
+	$('#step2 select[id^=optional] option').prop('selected', state);
+	subButton();
+	disable();
+}
+
+function select_all(id) { select_global(id, true); };
+function select_none(id) { select_global(id, false); };
+
 function disable(){
 	//step 1 done button
 	var selmaj = $('#major option:selected').length;
@@ -122,18 +144,14 @@ function disable(){
 	else{button1.disabled=true;}
 	
 	//step 2 done button
-	var step2 = (true && $('#majorOp option:selected').length > 0);
-	var numSpan2 = document.getElementById("step2").getElementsByTagName("SPAN").length;
-	for (i = 0; i < numSpan2-1; i++){
-		var op = "#optional" + i.toString() + "Op option:selected";
-		step2 = (step2 && $(op).length > 0);
-	}
-	var button2 = document.getElementById("step2done");
-	if (step2){button2.disabled=false;}
-	else{button2.disabled=true;}
-	
+	var step2 = $('#majorOp option:selected').length > 0;
+	$('#step2 select[id^=optional]').each(function(index){
+		step2 = step2 && $(this).find("option:selected").length > 0;
+	});
+	$('#step2done').prop('disabled', !step2)
+
 	//step 3 done button
-	var step3 = (true && $('#majdatesel option:selected').length > 0 && $('#majviscodesel option:selected').length > 0);
+	var step3 = (true && $('#majdatesel option:selected').length > 0 || $('#majviscodesel option:selected').length > 0);
 	var numSpan3 = document.getElementById("step3").getElementsByTagName("SPAN").length;
 	for (i = 0; i < numSpan3-1; i++){
 		var op = "#merge" + i.toString() + " option:selected";

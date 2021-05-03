@@ -39,8 +39,10 @@ $def semiauto_info_update():
         <!--<![endif]-->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <link rel="stylesheet" type="text/css" href="/static/style/test.css">
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
         <script type="text/javascript" src="/static/js/htmltable2csv.js"></script>
         <script type="text/javascript" src="/static/js/printquery.js"></script>
         <script type="text/javascript" src="/static/js/menuactive.js"></script>        
@@ -254,6 +256,25 @@ window.onload = loadDelForm();
 
 if (url.includes("builder")){window.onload = loadBuilderInfo_builder();}
 if (url.includes("merge")){window.onload = loadBuilderInfo("dbfilemerge");}
+
+fix_thead = function(id) {
+    var myTable = jQuery(id);
+    var thead = myTable.find("thead");
+    var thRows =  myTable.find("tr:has(th)");
+    if (thead.length===0){  //if there is no thead element, add one.
+        thead = jQuery("<thead></thead>").appendTo(myTable);
+    }
+    var copy = thRows.clone(true).appendTo("thead");
+    thRows.remove();
+};
+
+if (url.includes("result")) {
+    $$(document).ready(function () {
+        fix_thead('#result-table');
+        $$('#result-table').DataTable();
+    })
+}
+
         </script>
     </body>
 </html>

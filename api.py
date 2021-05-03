@@ -417,6 +417,7 @@ class Query:
                 raise web.seeother('/query/result')
                 
         if args=='/builder':
+            print('At builder')
             qOptional = dict()
             qMajor = dict()
             qMerge = dict()
@@ -438,9 +439,15 @@ class Query:
             for i, op in enumerate(w.optional):
                 qOptional[op] = w["optional" + str(i) + "Op"]
                 if ("custommerge" + str(i) in keys): 
-                    if (w["merge" + str(i)] == "date"):    qMerge[op] = {w["merge" + str(i)]: [w["custommerge" + str(i)], w["datecustommerge" + str(i)]]}
-                    else: qMerge[op] = {w["merge" + str(i)]: w["custommerge" + str(i)]}
-                else: qMerge[op] = {w["merge" + str(i)]: ""}
+                    if (w["merge" + str(i)] == "date"):
+                        qMerge[op] = {w["merge" + str(i)]: [w["custommerge" + str(i)], w["datecustommerge" + str(i)]]}
+                    else:
+                        qMerge[op] = {w["merge" + str(i)]: w["custommerge" + str(i)]}
+                else:
+                    qMerge[op] = {w["merge" + str(i)]: ""}
+
+                # Left join vs. full join
+                qMerge[op]['optional'] = (w["jointypecustommerge" + str(i)] == 'full')
 
             q, tbl = query_builder(qMajor, qOptional, qMerge, w.stdinfo)
             

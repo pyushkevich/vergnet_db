@@ -226,7 +226,7 @@ function mergeOption(dates, viscodes){
 function data_opt(id){
 	var step2 = document.getElementById("step2");
 	var step2_inner = document.getElementById("step2_inner");
-	var step3 = document.getElementById("step3");
+	var step3_inner = document.getElementById("step3_inner");
 	var values = $("#optional").val();
 
 	if (step2_inner.childElementCount > 1){
@@ -235,9 +235,9 @@ function data_opt(id){
 		}
 	}
 	
-	if (step3.childElementCount > 3){
-		for(i = step3.childElementCount-3; i>=3; i--){
-			step3.children[i].remove();
+	if (step3_inner.childElementCount > 0){
+		for(i = step3_inner.childElementCount-1; i>=0; i--){
+			step3_inner.children[i].remove();
 		}
 	}
 	
@@ -252,14 +252,17 @@ function data_opt(id){
 		seltemp2.name = "optional" + i + "Op";
 		seltemp2.setAttribute("onchange", "disable()");
 		seltemp2.multiple = true;
+		seltemp2.setAttribute("size", 10);
 		
-		var spantemp3 = document.createElement("span");
+		var spantemp3 = document.createElement("div");
+		spantemp3.className="pure-u-1 pure-u-md-1-2";
 		spantemp3.id = "spanmerge" + i;
-		spantemp3.innerHTML = values[i] + " how to merge: ";
+		spantemp3.innerHTML = "<b>" +  values[i] + ":</b><br>";
 		
 		var seltemp3 = document.createElement("select");
 		seltemp3.id = "merge" + i;
 		seltemp3.name = "merge" + i;
+		seltemp3.setAttribute("data-table", values[i]);
 		seltemp3.setAttribute("onchange","changeDefMerge(this.id); disable()");
 		
 		var opdef = document.createElement("option");
@@ -275,8 +278,11 @@ function data_opt(id){
 		opViscode.setAttribute("value", "viscode");
 		opViscode.innerHTML = "Viscode";
 		seltemp3.appendChild(opViscode);
-		
-		
+
+		// Extra fields in spantemp3
+		var spantemp3_extras = document.createElement("div");
+		spantemp3_extras.id = "extraspan_merge" + i;
+
 		spantemp2.appendChild(seltemp2);
 		spantemp2.appendChild(document.createElement("br"));
 		var refstep2 = document.getElementById("step2previous");
@@ -284,10 +290,19 @@ function data_opt(id){
 		// step2_inner.insertBefore(document.createElement("br"), refstep2);
 		// step2_inner.insertBefore(document.createElement("br"), refstep2);
 		properties_opt(seltemp2.id, callback_opt, values[i]);
-		
+
+		var seltemp3_label = document.createElement("label");
+		seltemp3_label.control=seltemp3;
+		seltemp3_label.innerHTML="Merge on:";
+
+		spantemp3.appendChild(seltemp3_label);
 		spantemp3.appendChild(seltemp3);
+		spantemp3.appendChild(document.createElement("br"));
+		spantemp3.appendChild(spantemp3_extras);
+
+		document.getElementById("step3_inner").appendChild(spantemp3);
+
 		var refstep3 = document.getElementById("step3previous");
-		step3.insertBefore(spantemp3, refstep3);
 		step3.insertBefore(document.createElement("br"), refstep3);
 		step3.insertBefore(document.createElement("br"), refstep3);
 	}
@@ -295,16 +310,19 @@ function data_opt(id){
 
 function changeDefMerge(id){
 	var selmerge = document.getElementById(id);
-	var spanmerge = document.getElementById("span"+id);
+	var spanmerge = document.getElementById("extraspan_"+id);
 	var val = selmerge.value;
-	var csvname = (spanmerge.innerHTML).split(" ")[0];
+	var csvname = selmerge.getAttribute("data-table");
 	
 	var seltemp = document.createElement("select");
 	seltemp.id = "custom" + id;
 	seltemp.name = "custom" + id;
-	
-	if (spanmerge.childElementCount > 1){
-		for(i = spanmerge.childElementCount-1; i>=1; i--) {spanmerge.children[i].remove();}
+
+	var seltemp_label = document.createElement("label");
+	seltemp_label.control = seltemp.id;
+
+	if (spanmerge.childElementCount > 0){
+	  for(i = spanmerge.childElementCount-1; i>=0; i--) {spanmerge.children[i].remove();}
 	}
 	
 	if (val != "default"){
@@ -325,13 +343,22 @@ function changeDefMerge(id){
 						optemp.innerHTML = temp[i];
 						seltemp.appendChild(optemp);
 					}
+					spanmerge.appendChild(seltemp_label);
 					spanmerge.appendChild(seltemp);
-					
+					spanmerge.appendChild(document.createElement("br"));
+
 					if (val == "date"){
+
+						seltemp_label.innerHTML = "Date field:";
+
 						var seldate = document.createElement("select");
 						seldate.id = "date" + seltemp.id;
 						seldate.name = seldate.id;
 						
+						var seldate_label = document.createElement("label");
+						seldate_label.control = seldate.id;
+						seldate_label.innerHTML = "Match type:"
+
 						var opeq = document.createElement("option");
 						opeq.setAttribute("value", "equal");
 						opeq.innerHTML = "Equal";
@@ -352,9 +379,38 @@ function changeDefMerge(id){
 						seldate.appendChild(opclo);
 						seldate.appendChild(opbef);
 						seldate.appendChild(opaft);
-						
+
+						spanmerge.appendChild(seldate_label);
 						spanmerge.appendChild(seldate);
+						spanmerge.appendChild(document.createElement("br"));
 					}
+					else {
+						seltemp_label.innerHTML = "Visit code field:";
+					}
+
+					// Add the hard/soft join option
+					var seljoin = document.createElement("select");
+					seljoin.id = "jointype" + seltemp.id;
+					seljoin.name = seljoin.id;
+
+					var seljoin_label = document.createElement("label");
+					seljoin_label.control = seljoin.id;
+					seljoin_label.innerHTML = "Join type:"
+
+					var opleft = document.createElement("option");
+					opleft.setAttribute("value", "left");
+					opleft.innerHTML = "Left Join";
+
+					var opfull = document.createElement("option");
+					opfull.setAttribute("value", "full");
+					opfull.innerHTML = "Full Join";
+
+					seljoin.appendChild(opleft);
+					seljoin.appendChild(opfull);
+
+					spanmerge.appendChild(seljoin_label);
+					spanmerge.appendChild(seljoin);
+
 				}else{
 					for (i = 0; i < selmerge.length; i++){
 						if (selmerge.options[i].value == val){selmerge.remove(i);}

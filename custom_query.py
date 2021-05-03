@@ -25,10 +25,20 @@ def query_builder(qMajor, qOptional, qMerge, stdinfo):
 		q += withStr[:-1] + ", dxinfo, min(diffdx) as mindx\n"
 		withStr = withStr[:-1] + ", dxinfo, mindx\n"
 		tbl += ["PDXCONV", "DXSUM"]
-		
+
+	# For each optional data, we need a map from ID to index
+	opt_index_map={}
+
 	for i, opt in enumerate(optional):
-		q += "optional match (p)--(n{}:{})\n".format(i, opt)
+		# Type of merge
+		matchstr = 'optional match' if qMerge[opt]['optional'] is True else 'match'
+
+		q += "{} (p)--(n{}:{})\n".format(matchstr, i, opt)
 		mergetemp = list(qMerge[opt].keys())[0]
+
+		opt_index_map[opt] = {}
+		for k, field in enumerate(list(qOptional[opt])):
+			opt_index_map[opt][field] = k
 		
 		if mergetemp == "date" and qMerge[opt][mergetemp][1] == "closest":
 			q += "where n{num}.{0} <> \"\"\n".format(qMerge[opt][mergetemp][0], num = i)
@@ -86,30 +96,48 @@ def query_builder(qMajor, qOptional, qMerge, stdinfo):
 		q += "case when filter(x in dxinfo where x[0]=mindx)[-1][2]<>\"\" then filter(x in dxinfo where x[0]=mindx)[-1][2]\n"
 		q += "when filter(x in dxinfo where x[0]=mindx)[-1][1]<>\"\" then filter(x in dxinfo where x[0]=mindx)[-1][1]\n"
 		q += "else filter(x in dxinfo where x[0]=mindx)[-1][3] end as DXCHANGE,\n"
-	
+
+	# Go through the major coulns
 	for majdata in list(qMajor[maj]):
-		if majdata in ["VISCODE2","SCANDATE"]:
+
+		# Check if the field is unique
+		unique = True
+		for i, opt in enumerate(optional):
+			if majdata in list(qOptional[opt]):
+				unique = False
+
+		# If unique field, then just add to query and that's it
+		if unique:
+			q += "n.{data} as {data}, ".format(data=majdata)
+		else:
+			# Add the major table name to the column name
 			suffix = 'TMP' if maj.startswith('tmp_') else maj
-			data = "{data}_{spr}".format(data = majdata, spr = suffix)
-			q += "n.{} as {}, ".format(majdata, data)
-			
-		else: q += "n.{data} as {data}, ".format(data = majdata)
-	
+			q += "n.{} as {}_{}, ".format(majdata, majdata, suffix)
+
+			# Add the same column in merge tables
+			for i, opt in enumerate(optional):
+				if majdata in list(qOptional[opt]):
+					mergetemp = list(qMerge[opt].keys())[0]
+					if mergetemp == "date" and qMerge[opt][mergetemp][1] in ["closest", "after", "before"]:
+						#q += "filter(x in n{num}cond where x[0] = minN{num})[0][{j}] as {data}_{opt},\n".format(
+						#	num=i, j=j + 1, data=majdata, opt=opt)
+						q += "filter(x in n{num}cond where x[0] = minN{num})[0][{index}] as {data}_{opt},\n".format(
+							num=i, data=majdata, opt=opt, index=opt_index_map[opt][majdata]+1)
+					else:
+						q += "n{num}.{data} as {data}_{opt}, ".format(num=i, data=majdata, opt=opt)
+
 	for i, opt in enumerate(optional):
 		mergetemp = list(qMerge[opt].keys())[0]
 		if mergetemp == "date" and qMerge[opt][mergetemp][1] in ["closest","after","before"]:
 			for j, data in enumerate(list(qOptional[opt])):
-				if data in ["VISCODE2","SCANDATE"]: 
-					data = "{}_{}".format(data, opt)		
-				q += "filter(x in n{num}cond where x[0] = minN{num})[0][{j}] as {data},\n".format(num = i, j = j + 1, data = data)
+				if data not in list(qMajor[maj]):
+					q += "filter(x in n{num}cond where x[0] = minN{num})[0][{index}] as {data},\n".format(
+						num = i, j = j + 1, data = data, index = opt_index_map[opt][data]+1)
 
 		else:
 			for data in list(qOptional[opt]):
-				if data in ["VISCODE2","SCANDATE"]:
-					data_mod = "{}_{}".format(data, opt)
-					q += "n{num}.{data} as {data_mod}, ".format(num = i, data = data, data_mod = data_mod)
-					
-				else: q += "n{num}.{data} as {data}, ".format(num = i, data = data)
+				if data not in list(qMajor[maj]):
+					q += "n{num}.{data} as {data}, ".format(num = i, data = data)
 	
 	q = q[:-2] +  " order by RID"
 	

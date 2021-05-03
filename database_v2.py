@@ -56,7 +56,7 @@ def create_query_node(csv_file_name,node_type):
     #field_list=get_field_list(csv_file_name)
     get_field_list(csv_file_name,field_list)
         
-    q="load csv with headers from \"file:///" + csv_file_name +" \" as row "
+    q="load csv with headers from \"file:///" + csv_file_name +" \" as row \n"
     if node_type=='Person':
         q+="MERGE (n:Person{RID:row.RID})\
             ON CREATE SET n.RID = row.RID"    
@@ -100,6 +100,7 @@ def update_database(csv_file_names):
     info_dict={"contains_updates":False, "nodes_created":0, "relationships_created":0, "exectime":0}
     for cursor in cursors:
         stats=cursor.stats()
+        print("Stats:", stats)
         exectime=0 # cursor.summary().result_available_after+cursor.summary().result_consumed_after
         if (stats["contained_updates"]):
             info_dict["contains_updates"]=True

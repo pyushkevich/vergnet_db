@@ -29,8 +29,9 @@ def mergeLMrows(infile, outfile):
 def preprocess(csvfilename,dirs):
 	mi_pet="Coreg, Avg, Std Img and Vox Siz, Uniform Resolution" 
 	for dir in dirs:
-		f=open(dir +'/'+csvfilename,newline='')
+		f=open(dir +'/'+csvfilename,newline='', encoding='utf-8-sig')
 		pattern=re.compile('\d{3}_S_0*')
+		print('Writing CSV to %s', (open(dir +'/'+csvfilename.replace('.csv','_temp.csv'),'w'),))
 		with open(dir +'/'+csvfilename.replace('.csv','_temp.csv'),'w') as temp:
 			for i,line in enumerate(f):
 				mritype=-4

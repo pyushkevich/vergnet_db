@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x -e
 
 # Login
 curl -s "https://ida.loni.usc.edu/login.jsp?project=ADNI&page=HOME" \

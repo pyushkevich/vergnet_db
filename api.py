@@ -144,6 +144,16 @@ def query_upper(q):
     q=q.replace('collect','COLLECT')
     return q
 
+
+# List of date variables that could be used for merging
+def select_datevars(properties):
+    return [x for x in properties if ( x.upper() in ("SCANDATE", "SCANDATE2", "USERDATE", "USERDATE2") ) ]
+
+
+def select_visvars(properties):
+    return [x for x in properties if (x.upper() in ("VISCODE2",))]
+
+
 #function to upload files
 def upload_file(file,filedir,local_name=None):
     if 'myfile' in file: # to check if the file-object is created
@@ -630,8 +640,7 @@ class Temp:
             if "opvar" in args:
                 x=web.input()
                 labels=prop(x.csvname)
-                if (x.type == "date"): vars = [x for x in labels if ("SCANDATE" in x.upper())]
-                else: vars = [x for x in labels if ("VISCODE2" in x.upper())]
+                vars = select_datevars(labels) if (x.type == "date") else select_visvars(labels)
                 return json.dumps(vars)
 
             if "upload" in args:

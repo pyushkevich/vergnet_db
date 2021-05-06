@@ -16,37 +16,37 @@ def return_all_properties(node_letter,csvfilename):
 	q=", "
 	for i,field in enumerate(field_list):
 		if field!="ID":
-			if field!="SCANDATE":
+			if field!="SMARTDATE":
 				q+="{}.{} as {}{} ".format(node_letter,field, field,',' if i<len(field_list)-1 else '')
 			else:
-				q+="{}.{} as SCANDATE{} ".format(node_letter,field,',' if i<len(field_list)-1 else '')
+				q+="{}.{} as SMARTDATE{} ".format(node_letter,field,',' if i<len(field_list)-1 else '')
 	return q
 	
 def query1(info):	
 	q="MATCH (p:Person)-->(t:TAUMETA) \n\
-	WITH p.RID AS rid,min(t.SCANDATE) AS mindate \n\
-	MATCH (d:DXSUM_PDXCONV_ADNIALL{VISCODE2:t.VISCODE2})<--(p:Person{RID:rid})-->(t:TAUMETA{SCANDATE:mindate}) \n\
-	RETURN toInteger(p.RID) AS RID, mindate AS TauPETScanDate, d.SCANDATE AS ExamDate, \n\
+	WITH p.RID AS rid,min(t.SMARTDATE) AS mindate \n\
+	MATCH (d:DXSUM_PDXCONV_ADNIALL{VISCODE2:t.VISCODE2})<--(p:Person{RID:rid})-->(t:TAUMETA{SMARTDATE:mindate}) \n\
+	RETURN toInteger(p.RID) AS RID, mindate AS TauPETScanDate, d.SMARTDATE AS ExamDate, \n\
 	case when d.DXCHANGE<>'' then d.DXCHANGE else d.DIAGNOSIS end as DXCHANGE, d.DXCONV AS DXCONV order by RID"
 	if info==False:return q
 	else:return "For all subjects with a tau PET scan, list their earliest tau scan and the nearest diagnosis in time."
 		
 def query2(info):
 	q="MATCH (p:Person)-->(t:TAUMETA) \n\
-	WITH  p.RID AS rid,min(t.SCANDATE) AS mindate \n\
-	MATCH (d:DXSUM_PDXCONV_ADNIALL{VISCODE2:t.VISCODE2})<--(p:Person{RID:rid})-->(t:TAUMETA{SCANDATE:mindate}) WHERE t.DXCHANGED=0 OR NOT exists(t.DXCHANGED) \n\
-	RETURN toInteger(p.RID) AS RID, mindate AS TauPETScanDate, d.SCANDATE AS ExamDate, case when d.DXCHANGE<>'' then d.DXCHANGE else d.DIAGNOSIS end as DXCHANGE, d.DXCONV AS DXCONV order by RID"
+	WITH  p.RID AS rid,min(t.SMARTDATE) AS mindate \n\
+	MATCH (d:DXSUM_PDXCONV_ADNIALL{VISCODE2:t.VISCODE2})<--(p:Person{RID:rid})-->(t:TAUMETA{SMARTDATE:mindate}) WHERE t.DXCHANGED=0 OR NOT exists(t.DXCHANGED) \n\
+	RETURN toInteger(p.RID) AS RID, mindate AS TauPETScanDate, d.SMARTDATE AS ExamDate, case when d.DXCHANGE<>'' then d.DXCHANGE else d.DIAGNOSIS end as DXCHANGE, d.DXCONV AS DXCONV order by RID"
 	if info==False:return q
 	else:
 		return "For all subjects with a tau PET scan, list their earliest tau scan and the nearest diagnosis in time. Exclude subjects whose diagnosis has changed from 1 year before to 1 year after the tau scan."
 
 def query3(info):
 	q="MATCH (p:Person)-->(t:TAUMETA) \n\
-	WITH  p.RID AS rid,min(t.SCANDATE) AS mindate \n\
-	MATCH (d:DXSUM_PDXCONV_ADNIALL{VISCODE2:t.VISCODE2})<--(p:Person{RID:rid})-->(t:TAUMETA{SCANDATE:mindate}) \n\
+	WITH  p.RID AS rid,min(t.SMARTDATE) AS mindate \n\
+	MATCH (d:DXSUM_PDXCONV_ADNIALL{VISCODE2:t.VISCODE2})<--(p:Person{RID:rid})-->(t:TAUMETA{SMARTDATE:mindate}) \n\
 	OPTIONAL MATCH (p)--(n:NEUROBAT{VISCODE2:t.VISCODE2}) \n\
 	OPTIONAL MATCH (p)--(m:MMSE{VISCODE2:t.VISCODE2}) \n\
-	RETURN toInteger(p.RID) AS RID, mindate AS TauPETScanDate, d.SCANDATE AS ExamDate, \n\
+	RETURN toInteger(p.RID) AS RID, mindate AS TauPETScanDate, d.SMARTDATE AS ExamDate, \n\
 	case when d.DXCHANGE<>'' then d.DXCHANGE else d.DIAGNOSIS end as DXCHANGE, d.DXCONV AS DXCONV, \n\
 	n.AVDELTOT AS AVDELTOT, m.MMSCORE AS MMSCORE order by RID"
 	if info==False:return q
@@ -57,7 +57,7 @@ def query4(info):
 	WHERE toInteger(p.RID)>1999 \n\
 	return toInteger(p.RID) AS RID"
 	q+=return_all_properties("m","MRI3META")
-	q+="ORDER BY RID, SCANDATE"
+	q+="ORDER BY RID, SMARTDATE"
 	if info==False:return q
 	else:return "Get all MRI scan information for subjects in ADNI2-GO-3 (RID>1999), sorted by RID then scandate."
 
@@ -66,11 +66,11 @@ def query5(info):
 	WHERE toInteger(P.PETTYPE)=2 and toInteger(P.RIGHTONE)=1 \n\
 	WITH p, P \n\
 	OPTIONAL MATCH (p)--(tau:TAUMETA) \n\
-	WHERE tau.SCANDATE=P.SCANDATE \n\
+	WHERE tau.SMARTDATE=P.SMARTDATE \n\
 	RETURN toInteger(p.RID) AS RID, P.Subject AS ID, tau.VISCODE AS VISCODE, \n\
 	case when tau.VISCODE2 is not null then tau.VISCODE2 \n\
 	when tau.VISCODE='bl' then 'bl' else '' end AS VISCODE2, \n\
-	P.PHASE AS PHASE, P.SCANDATE AS SCANDATE, P.Sequence AS SEQUENCE, P.StudyID AS STUDYID, P.SeriesID AS SERIESID, P.ImageID AS IMAGEID order by RID"
+	P.PHASE AS PHASE, P.SMARTDATE AS SMARTDATE, P.Sequence AS SEQUENCE, P.StudyID AS STUDYID, P.SeriesID AS SERIESID, P.ImageID AS IMAGEID order by RID"
 	if info==False:return q
 	else: return "Get all the TAU scans with all informations"
 	
@@ -78,13 +78,13 @@ def query6(info):
 	q="match (p:Person)--(P:PET_META_LIST) \n\
 	where toInteger(P.PETTYPE)=1 and toInteger(P.RIGHTONE)=1 \n\
 	with p, P \n\
-	optional match (p)--(av:AV45META{SCANDATE:P.SCANDATE}) \n\
-	optional match (p)--(am:AMYMETA{SCANDATE:P.SCANDATE}) \n\
+	optional match (p)--(av:AV45META{SMARTDATE:P.SMARTDATE}) \n\
+	optional match (p)--(am:AMYMETA{SMARTDATE:P.SMARTDATE}) \n\
 	with p, P, av, am \n\
 	return toInteger(p.RID) as RID, P.Subject as ID, \n\
 	case when av.VISCODE is not null then av.VISCODE else am.VISCODE end as VISCODE, \n\
 	case when av.VISCODE2 is not  null then av.VISCODE2 else am.VISCODE2 end as VISCODE2, \n\
-	P.PHASE as PHASE, P.SCANDATE as SCANDATE, P.Sequence as SEQUENCE, P.StudyID as STUDYID, P.SeriesID as SERIESID, P.ImageID as IMAGEID \n\
+	P.PHASE as PHASE, P.SMARTDATE as SMARTDATE, P.Sequence as SEQUENCE, P.StudyID as STUDYID, P.SeriesID as SERIESID, P.ImageID as IMAGEID \n\
 	order by RID"
 	if info==False:return q
 	else: return "Get all the Amyloid scans with all informations"
@@ -93,8 +93,8 @@ def query7(info):
 	q="match (p:Person)--(P:PET_META_LIST) \n\
 	where toInteger(P.PETTYPE)=0 and toInteger(P.RIGHTONE)=1 \n\
 	with p, P \n\
-	optional match (p)--(pet:PETMETA) where pet.SCANDATE=P.SCANDATE \n\
-	return toInteger(p.RID) as RID, P.Subject as ID, pet.VISCODE as VISCODE, pet.VISCODE2 as VISCODE2, P.PHASE as PHASE, P.SCANDATE as SCANDATE, P.Sequence as SEQUENCE, P.StudyID as STUDYID, P.SeriesID as SERIESID, P.ImageID as IMAGEID order by RID"
+	optional match (p)--(pet:PETMETA) where pet.SMARTDATE=P.SMARTDATE \n\
+	return toInteger(p.RID) as RID, P.Subject as ID, pet.VISCODE as VISCODE, pet.VISCODE2 as VISCODE2, P.PHASE as PHASE, P.SMARTDATE as SMARTDATE, P.Sequence as SEQUENCE, P.StudyID as STUDYID, P.SeriesID as SERIESID, P.ImageID as IMAGEID order by RID"
 	if info==False:return q
 	else: return "Get all the FDG scans with all informations"	
 	
@@ -103,12 +103,12 @@ def query8(info):
 	where toInteger(m.MRITYPE)=0 \n\
 	with p,m \n\
 	match (p)--(M:MRI3META) \n\
-	where M.SCANDATE=m.SCANDATE \n\
-	with m.SCANDATE as sDate1, collect([m.IMAGEUID, m.T1ACCE]) as l1, max(m.IMAGEUID) as MAX1,min(m.IMAGEUID) as MIN1, m.PHASE as PHASE1, p, M.FIELD_STRENGTH as FIELD_STRENGTH, m.SUBJECT as ID, M.VISCODE as VISCODE, M.VISCODE2 as VISCODE2 \n\
+	where M.SMARTDATE=m.SMARTDATE \n\
+	with m.SMARTDATE as sDate1, collect([m.IMAGEUID, m.T1ACCE]) as l1, max(m.IMAGEUID) as MAX1,min(m.IMAGEUID) as MIN1, m.PHASE as PHASE1, p, M.FIELD_STRENGTH as FIELD_STRENGTH, m.SUBJECT as ID, M.VISCODE as VISCODE, M.VISCODE2 as VISCODE2 \n\
 	optional match (p)--(m:MRILIST) \n\
-	where toInteger(m.MRITYPE)=1 and m.SCANDATE=sDate1 \n\
+	where toInteger(m.MRITYPE)=1 and m.SMARTDATE=sDate1 \n\
 	with  p,collect(m.IMAGEUID) as l2, max(m.IMAGEUID) as MAX2, sDate1, l1, MAX1, MIN1, PHASE1, ID, FIELD_STRENGTH, VISCODE, VISCODE2 \n\
-	return toInteger(p.RID) as RID, ID, FIELD_STRENGTH, PHASE1 as PHASE, VISCODE, VISCODE2, sDate1 as SCANDATE, \n\
+	return toInteger(p.RID) as RID, ID, FIELD_STRENGTH, PHASE1 as PHASE, VISCODE, VISCODE2, sDate1 as SMARTDATE, \n\
 	case when size(filter(x in l1 where x[1]='0' and x[0]<MAX1))>0 then filter(x in l1 where x[1]='0' and x[0]<MAX1)[0][0] \n\
 	when size(filter(x in l1 where x[1]='0' and x[0]>MIN1))>0 then filter(x in l1 where x[1]='0' and x[0]>MIN1)[0][0] else filter(x in l1 where x[0]=MAX1)[0][0] end as IMAGUID_T1, \n\
 	case when size(filter(x in l1 where x[1]='0' and x[0]<MAX1))>0 then 'N' \n\
@@ -120,7 +120,7 @@ def query8(info):
 	case size(filter(x in l1 where x[1]='1')) when 1 then filter(x in l1 where x[1]='1')[0][0] when 0 then '' else filter(x in l1 where x[1]='1') end as IMAGEUID_T1ACCE, \n\
 	size(l2) as NT2, \n\
 	case size(l2) when 1 then l2[0] when 0 then '' else l2 end as IMAGEUID_T2ALL \n\
-	order by RID, SCANDATE"
+	order by RID, SMARTDATE"
 	if info==False:return q
 	else: return "Get all the MRI scans with all T1 and T2 informations"	
 	
@@ -132,7 +132,7 @@ def query9(info):
 	OPTIONAL MATCH (n)--(m:MMSE{VISCODE2:d.VISCODE2}) \n\
 	OPTIONAL MATCH (n)--(c:CDR{VISCODE2:d.VISCODE2}) \n\
 	RETURN toInteger(n.RID) AS RID, d.VISCODE2 AS VISCODE2,info[0][0] AS PTGENDER, \n\
-	CASE WHEN d.SCANDATE<>'' THEN date(d.SCANDATE).year-toInteger(info[0][1]) ELSE '' END AS AGE_AT_VISIT, \n\
+	CASE WHEN d.SMARTDATE<>'' THEN date(d.SMARTDATE).year-toInteger(info[0][1]) ELSE '' END AS AGE_AT_VISIT, \n\
 	case when d.DXCHANGE<>'' then d.DXCHANGE when d.DIAGNOSIS<>'' then d.DIAGNOSIS else d.DXCURREN end as DXCHANGE, \n\
 	a.APVOLUME AS APVOLUME, a.APCOLLECT AS APCOLLECT, \n\
 	a.APTIME AS APTIME, a.RNACOLL AS RNACOLL, a.RNADATE AS RNADATE, a.RNATIME AS RNATIME, a.RNAVOL AS RNAVOL, \n\
@@ -148,8 +148,8 @@ def query10(info):
 	with collect(distinct p.RID) as rids \n\
 	unwind rids as R \n\
 	MATCH (p:Person{RID:R})--(d:DXSUM_PDXCONV_ADNIALL) \n\
-	with max(d.SCANDATE) as maxdate,p \n\
-	match (p)--(d:DXSUM_PDXCONV_ADNIALL{SCANDATE:maxdate}) \n\
+	with max(d.SMARTDATE) as maxdate,p \n\
+	match (p)--(d:DXSUM_PDXCONV_ADNIALL{SMARTDATE:maxdate}) \n\
 	return toInteger(p.RID) as RID, \n\
 	case when d.DXCHANGE<>'' then d.DXCHANGE else d.DIAGNOSIS end as DXCHANGE order by RID"
 	
@@ -158,12 +158,12 @@ def query10(info):
 
 def query11(info):
 	q="match (P:PET_META_LIST)--(p:Person)--(m:MRILIST) \n\
-	where toInteger(m.MRITYPE)=0 and toInteger(P.PETTYPE)=1 and P.SCANDATE=m.SCANDATE \n\
+	where toInteger(m.MRITYPE)=0 and toInteger(P.PETTYPE)=1 and P.SMARTDATE=m.SMARTDATE \n\
 	with collect(distinct p.RID) as rids \n\
 	unwind rids as R \n\
 	match (p:Person{RID:R})--(d:DXSUM_PDXCONV_ADNIALL) \n\
-	with max(d.SCANDATE) as maxdate, p \n\
-	match (p)--(d:DXSUM_PDXCONV_ADNIALL{SCANDATE:maxdate}) \n\
+	with max(d.SMARTDATE) as maxdate, p \n\
+	match (p)--(d:DXSUM_PDXCONV_ADNIALL{SMARTDATE:maxdate}) \n\
 	return toInteger(p.RID) as RID, \n\
 	case when d.DXCHANGE<>'' then d.DXCHANGE else d.DIAGNOSIS end as DXCHANGE order by RID"
 	
@@ -176,8 +176,8 @@ def query12(info):
 	with collect(distinct p.RID) as rids \n\
 	unwind rids as R \n\
 	match (p:Person{RID:R})--(d:DXSUM_PDXCONV_ADNIALL) \n\
-	with max(d.SCANDATE) as maxdate, p \n\
-	match (p)--(d:DXSUM_PDXCONV_ADNIALL{SCANDATE:maxdate}) \n\
+	with max(d.SMARTDATE) as maxdate, p \n\
+	match (p)--(d:DXSUM_PDXCONV_ADNIALL{SMARTDATE:maxdate}) \n\
 	return toInteger(p.RID) as RID, \n\
 	case when d.DXCHANGE<>'' then d.DXCHANGE else d.DIAGNOSIS end as DXCHANGE order by RID"
 	
@@ -193,24 +193,24 @@ def query13(info):
 	OPTIONAL MATCH (p)--(m:MRI3TListWithNIFTIPath) \n\
 	WITH COLLECT([m,abs(toInt(substring(m.VISCODE2,1))-toInt(substring(t.VISCODE2,1)))]) AS T1, T2, p, t \n\
 	OPTIONAL MATCH (p)--(a:Amyloid_fileloc) \n\
-	WITH p, t, T1, T2, COLLECT([a,abs(toInt(substring(a.VISCODE2,1))-toInt(substring(t.VISCODE2,1))),abs(duration.inDays(date(t.SCANDATE),date(a.SCANDATE)).days)]) AS AMY \n\
+	WITH p, t, T1, T2, COLLECT([a,abs(toInt(substring(a.VISCODE2,1))-toInt(substring(t.VISCODE2,1))),abs(duration.inDays(date(t.SMARTDATE),date(a.SMARTDATE)).days)]) AS AMY \n\
 	UNWIND extract(x in T2 | x[1]) AS T2diff \n\
 	UNWIND extract(x in T1 | x[1]) AS T1diff \n\
 	UNWIND extract(x in AMY | x[1]) AS AMYdiff \n\
 	WITH p, t, T1, T2, min(T2diff) AS T2Min, min(T1diff) AS T1Min, AMY, min(AMYdiff) AS AMYmin \n\
 	WITH p, t, T1, T2, T2Min, T1Min, AMY, AMYmin, \n\
-	CASE WHEN (t.VISCODE2='bl' and size(filter(x in T2 WHERE (x[0]).VISCODE2='bl')[0][0])>0) THEN (filter(x in T2 WHERE (x[0]).VISCODE2='bl')[0][0]).SCANDATE \n\
-	WHEN t.VISCODE2='bl' THEN (filter(x in T1 WHERE (x[0]).VISCODE2='bl')[0][0]).SCANDATE \n\
-	WHEN size(filter(x in T2 WHERE x[1]=T2Min))>1 THEN (filter(x in T2 WHERE x[1]=T2Min)[-1][0]).SCANDATE \n\
-	WHEN size(filter(x in T2 WHERE x[1]=T2Min))=1 THEN (filter(x in T2 WHERE x[1]=T2Min)[0][0]).SCANDATE \n\
-	ELSE (filter(x in T1 WHERE x[1]=T1Min)[0][0]).SCANDATE END AS MRISCANDATE, \n\
-	CASE WHEN t.VISCODE2='bl' THEN (filter(x in AMY WHERE (x[0]).VISCODE2='bl')[0][0]).SCANDATE \n\
-	WHEN size(filter(x in AMY WHERE x[1]=AMYmin))>1 THEN (filter(x in AMY WHERE x[1]=AMYmin)[-1][0]).SCANDATE \n\
-	when t.VISCODE2='' then case when size(filter(x in AMY WHERE x[2]<63))>0 then (filter(x in AMY WHERE x[2]<63)[0][0]).SCANDATE end \n\
-	ELSE (filter(x in AMY WHERE x[1]=AMYmin)[0][0]).SCANDATE END AS AMYSCANDATE \n\
-	RETURN toInteger(p.RID) AS RID, t.ID AS ID, t.VISCODE2 AS TAUVISCODE2, t.SCANDATE AS TAUSCANDATE, t.IMAGEID AS TAUIMAGEID, t.FILELOC AS TAUFILELOC, t.TAUNIFTI AS FINALTAUNIFTI, \n\
+	CASE WHEN (t.VISCODE2='bl' and size(filter(x in T2 WHERE (x[0]).VISCODE2='bl')[0][0])>0) THEN (filter(x in T2 WHERE (x[0]).VISCODE2='bl')[0][0]).SMARTDATE \n\
+	WHEN t.VISCODE2='bl' THEN (filter(x in T1 WHERE (x[0]).VISCODE2='bl')[0][0]).SMARTDATE \n\
+	WHEN size(filter(x in T2 WHERE x[1]=T2Min))>1 THEN (filter(x in T2 WHERE x[1]=T2Min)[-1][0]).SMARTDATE \n\
+	WHEN size(filter(x in T2 WHERE x[1]=T2Min))=1 THEN (filter(x in T2 WHERE x[1]=T2Min)[0][0]).SMARTDATE \n\
+	ELSE (filter(x in T1 WHERE x[1]=T1Min)[0][0]).SMARTDATE END AS MRISCANDATE, \n\
+	CASE WHEN t.VISCODE2='bl' THEN (filter(x in AMY WHERE (x[0]).VISCODE2='bl')[0][0]).SMARTDATE \n\
+	WHEN size(filter(x in AMY WHERE x[1]=AMYmin))>1 THEN (filter(x in AMY WHERE x[1]=AMYmin)[-1][0]).SMARTDATE \n\
+	when t.VISCODE2='' then case when size(filter(x in AMY WHERE x[2]<63))>0 then (filter(x in AMY WHERE x[2]<63)[0][0]).SMARTDATE end \n\
+	ELSE (filter(x in AMY WHERE x[1]=AMYmin)[0][0]).SMARTDATE END AS AMYSCANDATE \n\
+	RETURN toInteger(p.RID) AS RID, t.ID AS ID, t.VISCODE2 AS TAUVISCODE2, t.SMARTDATE AS TAUSCANDATE, t.IMAGEID AS TAUIMAGEID, t.FILELOC AS TAUFILELOC, t.TAUNIFTI AS FINALTAUNIFTI, \n\
 	MRISCANDATE, \n\
-	CASE WHEN MRISCANDATE is not null THEN duration.inDays(date(MRISCANDATE),date(t.SCANDATE)).days ELSE '' END AS DIFFDATETAU, \n\
+	CASE WHEN MRISCANDATE is not null THEN duration.inDays(date(MRISCANDATE),date(t.SMARTDATE)).days ELSE '' END AS DIFFDATETAU, \n\
 	CASE WHEN t.VISCODE2='bl' THEN 'bl' \n\
 	WHEN size(filter(x in T2 WHERE x[1]=T2Min))>1 THEN (filter(x in T2 WHERE x[1]=T2Min)[-1][0]).VISCODE2 \n\
 	WHEN size(filter(x in T2 WHERE x[1]=T2Min))=1 THEN (filter(x in T2 WHERE x[1]=T2Min)[0][0]).VISCODE2 \n\
@@ -261,16 +261,16 @@ def query14(info):
 	with p, m, collect([a,abs(toInt(substring(a.VISCODE2,1))-toInt(substring(m.VISCODE2,1)))]) as AMY \n\
 	unwind extract(x in AMY | x[1]) as AMYdiff \n\
 	with p, m, AMY, min(AMYdiff) as AMYmin \n\
-	return toInteger(p.RID) as RID, m.ID as ID, m.FIELD_STRENGTH as FIELD_STRENGTH, m.PHASE as PHASE, m.VISCODE2 as T2VISCODE2, m.SCANDATE as T2SCANDATE, m.IMAGEUID_T2ALL AS T2IMAGEUID, m.FINALT2NIFTI as FINALT2NIFTI, m.VENDOR2 as VENDOR, \n\
+	return toInteger(p.RID) as RID, m.ID as ID, m.FIELD_STRENGTH as FIELD_STRENGTH, m.PHASE as PHASE, m.VISCODE2 as T2VISCODE2, m.SMARTDATE as T2SCANDATE, m.IMAGEUID_T2ALL AS T2IMAGEUID, m.FINALT2NIFTI as FINALT2NIFTI, m.VENDOR2 as VENDOR, \n\
 	case when m.VENDOR2<>m.VENDOR3 then toString(m.VENDOR2 + ' to '+ m.VENDOR3) else '' end as VENDORCHANGED, \n\
 	m.MODEL2 as SCANMODEL, \n\
 	case when m.VENDOR2=m.VENDOR3 and m.MODEL2<>m.MODEL3 then toString(m.MODEL2 + ' to '+ m.MODEL3) else '' end as MODELCHANGED, \n\
 	case when m.VISCODE2='bl' then (filter(x in AMY where (x[0]).VISCODE2='bl')[0][0]).VISCODE2 \n\
 	when size(filter(x in AMY where x[1]=AMYmin))>1 then (filter(x in AMY where x[1]=AMYmin)[-1][0]).VISCODE2 \n\
 	else (filter(x in AMY where x[1]=AMYmin)[0][0]).VISCODE2 end as AMYVISCODE2, \n\
-	case when m.VISCODE2='bl' then (filter(x in AMY where (x[0]).VISCODE2='bl')[0][0]).SCANDATE \n\
-	when size(filter(x in AMY where x[1]=AMYmin))>1 then (filter(x in AMY where x[1]=AMYmin)[-1][0]).SCANDATE \n\
-	else (filter(x in AMY where x[1]=AMYmin)[0][0]).SCANDATE end as AMYSCANDATE, \n\
+	case when m.VISCODE2='bl' then (filter(x in AMY where (x[0]).VISCODE2='bl')[0][0]).SMARTDATE \n\
+	when size(filter(x in AMY where x[1]=AMYmin))>1 then (filter(x in AMY where x[1]=AMYmin)[-1][0]).SMARTDATE \n\
+	else (filter(x in AMY where x[1]=AMYmin)[0][0]).SMARTDATE end as AMYSCANDATE, \n\
 	case when m.VISCODE2='bl' then (filter(x in AMY where (x[0]).VISCODE2='bl')[0][0]).IMAGEID \n\
 	when size(filter(x in AMY where x[1]=AMYmin))>1 then (filter(x in AMY where x[1]=AMYmin)[-1][0]).IMAGEID \n\
 	else (filter(x in AMY where x[1]=AMYmin)[0][0]).IMAGEID end as AMYIMAGEID, \n\
@@ -286,12 +286,12 @@ def query15(info):
 	where n.RID in ['21', '59', '89', '150', '156', '301', '303', '377', '416', '454', '467', '501', '555', '566', '668', '677', '722', '746', '767', '800', '972', '1052', '1195', '1414', '1418', '2002', '2036', '2037', '2045', '2055', '2060', '2061', '2072', '2074', '2079', '2083', '2093', '2109', '2116', '2119', '2121', '2123', '2130', '2148', '2164', '2167', '2220', '2225', '2247', '2264', '2301', '2304', '2308', '2333', '2363', '2378', '2379', '2380', '2392', '4004', '4014', '4015', '4020', '4028', '4030', '4035', '4036', '4037', '4043', '4051', '4060', '4063', '4071', '4072', '4077', '4082', '4084', '4092', '4100', '4105', '4114', '4115', '4120', '4138', '4143', '4146', '4151', '4158', '4159', '4164', '4167', '4169', '4170', '4173', '4175', '4176', '4177', '4179', '4184', '4187', '4199', '4200', '4206', '4212', '4214', '4216', '4222', '4226', '4235', '4243', '4271', '4277', '4278', '4281', '4292', '4299', '4302', '4308', '4309', '4312', '4320', '4331', '4351', '4356', '4360', '4365', '4372', '4376', '4381', '4383', '4386', '4389', '4390', '4391', '4392', '4393', '4394', '4401', '4404', '4406', '4410', '4414', '4427', '4429', '4430', '4444', '4445', '4446', '4448', '4453', '4462', '4464', '4465', '4466', '4482', '4483', '4489', '4491', '4502', '4505', '4510', '4513', '4520', '4522', '4526', '4536', '4538', '4539', '4547', '4552', '4553', '4559', '4562', '4566', '4571', '4576', '4582', '4586', '4587', '4596', '4598', '4599', '4607', '4613', '4614', '4621', '4623', '4631', '4632', '4635', '4636', '4653', '4657', '4672', '4674', '4676', '4678', '4689', '4706', '4714', '4715', '4720', '4722', '4723', '4732', '4736', '4739', '4742', '4750', '4762', '4764', '4767', '4769', '4777', '4780', '4782', '4783', '4784', '4785', '4795', '4796', '4805', '4806', '4815', '4816', '4820', '4825', '4832', '4838', '4842', '4855', '4856', '4862', '4863', '4869', '4871', '4874', '4876', '4877', '4878', '4893', '4894', '4898', '4899', '4904', '4905', '4920', '4929', '4941', '4954', '4974', '4980', '4989', '5004', '5013', '5014', '5015', '5017', '5023', '5029', '5040', '5047', '5054', '5063', '5066', '5078', '5082', '5087', '5097', '5100', '5112', '5113', '5123', '5124', '5126', '5131', '5140', '5141', '5159', '5160', '5162', '5167', '5193', '5198', '5203', '5205', '5207', '5210', '5222', '5227', '5234', '5235', '5244', '5253', '5259', '5261', '5263', '5269', '5271', '5273', '5278', '5283', '5285', '5289', '5290', '5294'] \n\
 	WITH COLLECT([p.PTGENDER, p.PTDOBYY, p.PTEDUCAT]) AS info, n \n\
 	MATCH (n)--(d:DXSUM_PDXCONV_ADNIALL) \n\
-	with max(d.SCANDATE) as maxDate, info, n \n\
-	MATCH (n)--(d:DXSUM_PDXCONV_ADNIALL{SCANDATE:maxDate}) \n\
+	with max(d.SMARTDATE) as maxDate, info, n \n\
+	MATCH (n)--(d:DXSUM_PDXCONV_ADNIALL{SMARTDATE:maxDate}) \n\
 	with info, n, d \n\
 	MATCH (n)--(m:MMSE{VISCODE2:d.VISCODE2}) \n\
 	RETURN toInteger(n.RID) AS RID,info[0][0] AS PTGENDER, \n\
-	CASE WHEN d.SCANDATE<>'' THEN date(d.SCANDATE).year-toInteger(info[0][1]) ELSE '' END AS PTAGE, \n\
+	CASE WHEN d.SMARTDATE<>'' THEN date(d.SMARTDATE).year-toInteger(info[0][1]) ELSE '' END AS PTAGE, \n\
 	info[0][2] as PTEDUACTION, m.MMSCORE AS MMSCORE, \n\
 	case when d.DXCHANGE<>'' then d.DXCHANGE else d.DIAGNOSIS end as DXCHANGE order by RID" 
 	
@@ -305,7 +305,7 @@ def query16(info):
 	WITH COLLECT([p.PTGENDER,date({year:toInteger(p.PTDOBYY), month:toInteger(p.PTDOBMM)}), p.PTEDUCAT]) AS demoginfo, n, s \n\
 	OPTIONAL MATCH (n)--(d:DXSUM_PDXCONV_ADNIALL) \n\
 	WHERE s.TAUVISCODE2=d.VISCODE2 \n\
-	WITH n,s,demoginfo,COLLECT([d.DIAGNOSIS,d.DXCHANGE,d.Phase,d.VISCODE,d.VISCODE2,d.SCANDATE]) AS dxinfo \n\
+	WITH n,s,demoginfo,COLLECT([d.DIAGNOSIS,d.DXCHANGE,d.Phase,d.VISCODE,d.VISCODE2,d.SMARTDATE]) AS dxinfo \n\
 	OPTIONAL MATCH (n)--(f:UCBERKELEYFDG) \n\
 	WHERE s.TAUVISCODE2=f.VISCODE2 \n\
 	WITH n,s,demoginfo,dxinfo,f \n\
@@ -334,8 +334,8 @@ def query16(info):
 	CASE WHEN WMHmin is not null THEN (filter(x in WMH where x[1]=WMHmin)[0][0]).WHITMATHYP ELSE (filter(x in WMH where x[2]='bl')[0][0]).WHITMATHYP END \n\
 	ELSE '' end as WHITMATHYP, \n\
 	CASE WHEN s.TAUSCANDATE<>'' THEN \n\
-	CASE WHEN WMHmin is not null THEN abs(duration.inDays(date(s.TAUSCANDATE),date((filter(x in WMH where x[1]=WMHmin)[0][0]).SCANDATE)).days) \n\
-	WHEN size(filter(x in WMH where x[2]='bl'))>0 then abs(duration.inDays(date(s.TAUSCANDATE),date((filter(x in WMH where x[2]='bl')[0][0]).SCANDATE)).days) END \n\
+	CASE WHEN WMHmin is not null THEN abs(duration.inDays(date(s.TAUSCANDATE),date((filter(x in WMH where x[1]=WMHmin)[0][0]).SMARTDATE)).days) \n\
+	WHEN size(filter(x in WMH where x[2]='bl'))>0 then abs(duration.inDays(date(s.TAUSCANDATE),date((filter(x in WMH where x[2]='bl')[0][0]).SMARTDATE)).days) END \n\
 	ELSE '' end as DIFFDATEWMH, \n\
 	b.SUMMARYSUVR_WHOLECEREBNORM AS SUMMARYSUVR_WHOLECEREBNORM, b.SUMMARYSUVR_WHOLECEREBNORM_1_11CUTOFF AS SUMMARYSUVR_WHOLECEREBNORM_1_11CUTOFF \n\
 	order by RID"
@@ -382,8 +382,8 @@ def query17(info):
 	CASE WHEN WMHmin is not null THEN (filter(x in WMH WHERE x[1]=WMHmin)[0][0]).WHITMATHYP ELSE (filter(x in WMH WHERE x[2]='bl')[0][0]).WHITMATHYP END \n\
 	ELSE '' END AS WHITMATHYP, \n\
 	CASE WHEN s.TAUSCANDATE<>'' THEN \n\
-	CASE WHEN WMHmin is not null THEN abs(duration.inDays(date(s.TAUSCANDATE),date((filter(x in WMH WHERE x[1]=WMHmin)[0][0]).SCANDATE)).days) \n\
-	WHEN size(filter(x in WMH WHERE x[2]='bl'))>0 THEN abs(duration.inDays(date(s.TAUSCANDATE),date((filter(x in WMH WHERE x[2]='bl')[0][0]).SCANDATE)).days) END \n\
+	CASE WHEN WMHmin is not null THEN abs(duration.inDays(date(s.TAUSCANDATE),date((filter(x in WMH WHERE x[1]=WMHmin)[0][0]).SMARTDATE)).days) \n\
+	WHEN size(filter(x in WMH WHERE x[2]='bl'))>0 THEN abs(duration.inDays(date(s.TAUSCANDATE),date((filter(x in WMH WHERE x[2]='bl')[0][0]).SMARTDATE)).days) END \n\
 	ELSE '' END AS DIFFDATEWMH, \n\
 	b.SUMMARYSUVR_WHOLECEREBNORM AS SUMMARYSUVR_WHOLECEREBNORM, b.SUMMARYSUVR_WHOLECEREBNORM_1_11CUTOFF AS SUMMARYSUVR_WHOLECEREBNORM_1_11CUTOFF"
 	q+=return_all_properties("v","allvols2")
@@ -398,13 +398,13 @@ def query18(info):
 	where P.VISCODE2='bl' \n\
 	with COLLECT([date({year:toInteger(P.PTDOBYY), month:toInteger(P.PTDOBMM)}),date(P.USERDATE),P.PTEDUCAT,P.PTGENDER]) as demoginfo, p, q \n\
 	optional match (p)--(d:DXSUM_PDXCONV_ADNIALL) \n\
-	with p,q,demoginfo,COLLECT([abs(duration.inDays(date(q.SCANDATE),date(d.SCANDATE)).days),d.DIAGNOSIS,d.DXCHANGE,d.DXCURREN]) AS dxinfo \n\
+	with p,q,demoginfo,COLLECT([abs(duration.inDays(date(q.SMARTDATE),date(d.SMARTDATE)).days),d.DIAGNOSIS,d.DXCHANGE,d.DXCURREN]) AS dxinfo \n\
 	optional match (p)--(m:MMSE) \n\
-	with p,q,demoginfo,dxinfo,COLLECT([abs(duration.inDays(date(q.SCANDATE),date(m.USERDATE)).days),m.MMSCORE]) AS mmseinfo \n\
+	with p,q,demoginfo,dxinfo,COLLECT([abs(duration.inDays(date(q.SMARTDATE),date(m.USERDATE)).days),m.MMSCORE]) AS mmseinfo \n\
 	unwind extract(x in dxinfo | x[0]) as dxdiff \n\
 	unwind extract(x in mmseinfo | x[0]) as mmsediff \n\
 	with p,q,demoginfo,dxinfo,mmseinfo,min(dxdiff) as dxDate,min(mmsediff) as mmseDate \n\
-	return toInteger(p.RID) as RID, q.ID as ID, q.SCANDATE as SCANDATE, demoginfo[0][-1] as PTGENDER, demoginfo[0][-2] as PTEDUCAT, \n\
+	return toInteger(p.RID) as RID, q.ID as ID, q.SMARTDATE as SMARTDATE, demoginfo[0][-1] as PTGENDER, demoginfo[0][-2] as PTEDUCAT, \n\
 	duration.inMonths(demoginfo[0][0],demoginfo[0][1]).months/12 as Age_at_bl, \n\
 	case when filter(x in dxinfo where x[0]=dxDate)[0][2]<>'' then filter(x in dxinfo where x[0]=dxDate)[0][2]  \n\
 	when filter(x in dxinfo where x[0]=dxDate)[0][1]<>'' then filter(x in dxinfo where x[0]=dxDate)[0][1] \n\
@@ -428,8 +428,8 @@ def query19(info):
 	return toInteger(n.RID) as RID"
 	q+=return_all_properties("m","MRI3TListWithNIFTIPath")
 	q+=", CASE WHEN demoginfo[0][0]='' THEN demoginfo[1][0] ELSE demoginfo[0][0] END AS PTGENDER, \n\
-	CASE WHEN m.SCANDATE<>'' THEN \n\
-	CASE WHEN demoginfo[0][0]='' THEN duration.inMonths(demoginfo[1][1],date(m.SCANDATE)).months/12.0 ELSE duration.inMonths(demoginfo[0][1],date(m.SCANDATE)).months/12.0 END \n\
+	CASE WHEN m.SMARTDATE<>'' THEN \n\
+	CASE WHEN demoginfo[0][0]='' THEN duration.inMonths(demoginfo[1][1],date(m.SMARTDATE)).months/12.0 ELSE duration.inMonths(demoginfo[0][1],date(m.SMARTDATE)).months/12.0 END \n\
 	ELSE '' END AS PTAGE, \n\
 	CASE WHEN demoginfo[0][2]='' THEN demoginfo[1][2] ELSE demoginfo[0][2] END AS PTEDUCAT, \n\
 	CASE WHEN dxinfo[-1][1]<>'' THEN dxinfo[-1][1] WHEN dxinfo[-1][0]<>'' then dxinfo[-1][0] else dxinfo[-1][2] END AS DXCHANGE, \n\
@@ -476,7 +476,7 @@ def query21(info):
 	WITH COLLECT([p.PTGENDER,date({year:toInteger(p.PTDOBYY), month:toInteger(p.PTDOBMM)}), p.PTEDUCAT]) AS demoginfo, n, s \n\
 	MATCH (n)--(d:DXSUM_PDXCONV_ADNIALL) \n\
 	WHERE s.TAUVISCODE2=d.VISCODE2 \n\
-	WITH n,s,demoginfo,COLLECT([d.DIAGNOSIS,d.DXCHANGE,d.Phase,d.VISCODE,d.VISCODE2,d.SCANDATE]) AS dxinfo \n\
+	WITH n,s,demoginfo,COLLECT([d.DIAGNOSIS,d.DXCHANGE,d.Phase,d.VISCODE,d.VISCODE2,d.SMARTDATE]) AS dxinfo \n\
 	optional match (n)--(m:MRI_cog_data) \n\
 	where s.MRISCANDATE = m.MRIDATE_formatted \n\
 	with n,s,demoginfo,dxinfo,m \n\
@@ -520,7 +520,7 @@ def query23(info):
 	q="MATCH (p:Person)--(t:T2Tau) \n\
 	WITH p,t \n\
 	match (p)--(d:DXSUM_PDXCONV_ADNIALL) \n\
-	with p, t, COLLECT([abs(duration.inDays(date(d.SCANDATE),date(t.MRIDATE)).days), d.VISCODE2]) AS list2 \n\
+	with p, t, COLLECT([abs(duration.inDays(date(d.SMARTDATE),date(t.MRIDATE)).days), d.VISCODE2]) AS list2 \n\
 	UNWIND extract(x in list2 | x[0]) AS datediff \n\
 	WITH p, t, list2, min(datediff) AS min \n\
 	OPTIONAL MATCH (p)--(n:NEUROBAT) \n\
@@ -552,7 +552,7 @@ def query24(info):
 	WITH COLLECT([p.PTGENDER,date({year:toInteger(p.PTDOBYY), month:toInteger(p.PTDOBMM)}), p.PTEDUCAT]) AS demoginfo, n, s \n\
 	MATCH (n)--(d:DXSUM_PDXCONV_ADNIALL) \n\
 	WHERE s.TAUVISCODE2=d.VISCODE2 \n\
-	WITH n,s,demoginfo,COLLECT([d.DIAGNOSIS,d.DXCHANGE,d.Phase,d.VISCODE,d.VISCODE2,d.SCANDATE]) AS dxinfo \n\
+	WITH n,s,demoginfo,COLLECT([d.DIAGNOSIS,d.DXCHANGE,d.Phase,d.VISCODE,d.VISCODE2,d.SMARTDATE]) AS dxinfo \n\
 	OPTIONAL MATCH (n)--(m:MRI_cog_data) \n\
 	WHERE s.MRISCANDATE = m.MRIDATE_formatted \n\
 	WITH n,s,demoginfo,dxinfo,m \n\
@@ -580,7 +580,7 @@ def query25(info):
 	with n, s \n\
 	optional match (n)--(a:ADNI_scanner_summary) \n\
 	where date(a.seriesdate)=date(s.MRISCANDATE) \n\
-	return s.PHASE AS PHASE, s.VISCODE AS VISCODE, s.VISCODE2 AS VISCODE2, s.SCANDATE AS EXAMDATE, toInteger(s.RID) AS RID, s.ID AS ID, \n\
+	return s.PHASE AS PHASE, s.VISCODE AS VISCODE, s.VISCODE2 AS VISCODE2, s.SMARTDATE AS EXAMDATE, toInteger(s.RID) AS RID, s.ID AS ID, \n\
 	s.TAUVISCODE2 AS TAUVISCODE2, s.TAUSCANDATE AS TAUSCANDATE, s.TAUIMAGEID AS TAUIMAGEID, s.TAUFILELOC AS TAUFILELOC, s.FINALTAUNIFTI AS FINALTAUNIFTI, \n\
 	s.MRISCANDATE AS MRISCANDATE, s.DIFFDATETAU AS DIFFDATETAU, s.MRIVISCODE2 AS MRIVISCODE2, s.T2IMAGEUID AS T2IMAGEUID, s.FINALT2NIFTI AS FINALT2NIFTI, \n\
 	s.T1IMAGEUID AS T1IMAGEUID, s.FINALT1NIFTI AS FINALT1NIFTI, s.AMYVISCODE2 AS AMYVISCODE2, s.AMYSCANDATE AS AMYSCANDATE, s.DIFFDATEAMY AS DIFFDATEAMY, \n\
@@ -597,7 +597,7 @@ def query26(info):
 	WITH COLLECT([p.PTGENDER,date({year:toInteger(p.PTDOBYY), month:toInteger(p.PTDOBMM)}), p.PTEDUCAT]) AS demoginfo, n, s \n\
 	MATCH (n)--(d:DXSUM_PDXCONV_ADNIALL) \n\
 	WHERE s.TAUVISCODE2=d.VISCODE2 \n\
-	WITH n,s,demoginfo,COLLECT([d.DIAGNOSIS,d.DXCHANGE,d.Phase,d.VISCODE,d.VISCODE2,d.SCANDATE]) AS dxinfo \n\
+	WITH n,s,demoginfo,COLLECT([d.DIAGNOSIS,d.DXCHANGE,d.Phase,d.VISCODE,d.VISCODE2,d.SMARTDATE]) AS dxinfo \n\
 	MATCH (n)--(q:ToMergeWithQA_RI_updated) \n\
 	WHERE date(s.MRISCANDATE) = date(q.MRISCANDATE) \n\
 	WITH n,s,demoginfo,dxinfo,COLLECT([q.T2_QC_R, q.T2_QC_L]) as qcinfo \n\
@@ -629,8 +629,8 @@ def query27(info):
 	MATCH (n)--(p:PTDEMOG) \n\
 	WITH COLLECT([p.PTGENDER,date({year:toInteger(p.PTDOBYY), month:toInteger(p.PTDOBMM)}), p.PTEDUCAT]) AS demoginfo, n, v \n\
 	OPTIONAL MATCH (n)--(d:DXSUM_PDXCONV_ADNIALL) \n\
-	WHERE d.SCANDATE<>'' \n\
-	WITH n, v, demoginfo, COLLECT([abs(duration.inDays(date(v.bldate),date(d.SCANDATE)).days), d.DXCHANGE, d.DIAGNOSIS, d.DXCURREN, abs(duration.inDays(date(v.fudate),date(d.SCANDATE)).days), d.VISCODE2, d.Phase]) AS dxinfo \n\
+	WHERE d.SMARTDATE<>'' \n\
+	WITH n, v, demoginfo, COLLECT([abs(duration.inDays(date(v.bldate),date(d.SMARTDATE)).days), d.DXCHANGE, d.DIAGNOSIS, d.DXCURREN, abs(duration.inDays(date(v.fudate),date(d.SMARTDATE)).days), d.VISCODE2, d.Phase]) AS dxinfo \n\
 	UNWIND extract(x in dxinfo | x[0]) AS bldxdiff \n\
 	UNWIND extract(x in dxinfo | x[4]) AS fudxdiff \n\
 	WITH n, v, demoginfo, dxinfo, min(bldxdiff) AS minbldx, min(fudxdiff) AS minfudx \n\

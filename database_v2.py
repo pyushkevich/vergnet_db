@@ -95,7 +95,7 @@ def update_database(csv_file_names):
         cursors.append(tx.run(create_query_node(csv_file_name,csv)))
         cursors.append(tx.run(create_query_relationship('Person',csv)))
         
-    delete_duplicates(cursors,tx,csv)
+        delete_duplicates(cursors,tx,csv)
     tx.commit()    
     info_dict={"contains_updates":False, "nodes_created":0, "relationships_created":0, "exectime":0}
     for cursor in cursors:

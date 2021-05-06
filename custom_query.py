@@ -19,8 +19,8 @@ def query_builder(qMajor, qOptional, qMerge, stdinfo):
 		tbl.append("PTDEMOG")
 	
 	if 'dx' in stdinfo:
-		q += "optional match (p)--(d:DXSUM_PDXCONV_ADNIALL)\nwhere d.SCANDATE<>\"\"\n"
-		q += withStr[:-1] + ", collect([abs(duration.inDays(date(n.{}),date(d.SCANDATE)).days),d.DIAGNOSIS,d.DXCHANGE,d.DXCURREN,d.VISCODE2]) AS dxinfo\n".format(qMerge[maj]['date'])
+		q += "optional match (p)--(d:DXSUM_PDXCONV_ADNIALL)\nwhere d.SMARTDATE<>\"\"\n"
+		q += withStr[:-1] + ", collect([abs(duration.inDays(date(n.{}),date(d.SMARTDATE)).days),d.DIAGNOSIS,d.DXCHANGE,d.DXCURREN,d.VISCODE2]) AS dxinfo\n".format(qMerge[maj]['date'])
 		q += "unwind extract(x in dxinfo | x[0]) as diffdx\n"
 		q += withStr[:-1] + ", dxinfo, min(diffdx) as mindx\n"
 		withStr = withStr[:-1] + ", dxinfo, mindx\n"
@@ -175,7 +175,7 @@ def info_builder(qMajor, qOptional, qMerge, stdinfo):
 		result = info[:-4] + "." + returninfo[:-1] + "." + infosup[:-4] + "."
 	return result
 	
-def merge(input, mergewith, dates=['SCANDATE']):
+def merge(input, mergewith, dates=['SMARTDATE']):
 	tbl=[]
 	collect = "COLLECT(["
 	unwind = ""
@@ -186,7 +186,7 @@ def merge(input, mergewith, dates=['SCANDATE']):
 		WITH COLLECT([p.PTGENDER,date({{year:toInteger(p.PTDOBYY), month:toInteger(p.PTDOBMM)}}), p.PTEDUCAT]) AS demoginfo, n, i{}"
 	
 	for j, date in enumerate(dates):
-		collect += "abs(duration.inDays(date(i.{}),date(d.SCANDATE)).days),".format(date)
+		collect += "abs(duration.inDays(date(i.{}),date(d.SMARTDATE)).days),".format(date)
 		unwind += "UNWIND extract(x in dxinfo | x[{}]) as diff{}\n".format(j, date)
 		w += "min(diff{d}) as min{d}, ".format(d = date)
 		rdxtest += ",CASE WHEN filter(x in dxinfo where x[{num}]=min{d})[-1][-3]<>\"\" THEN filter(x in dxinfo where x[{num}]=min{d})[-1][-3] \
@@ -197,7 +197,7 @@ def merge(input, mergewith, dates=['SCANDATE']):
 	w = w[:-2]	
 		
 	mdxtest="OPTIONAL MATCH (n)--(d:DXSUM_PDXCONV_ADNIALL) \
-		WHERE d.SCANDATE<>\"\" \
+		WHERE d.SMARTDATE<>\"\" \
 		WITH " + collect + "d.DIAGNOSIS,d.DXCHANGE,d.DXCURREN,d.VISCODE2]) AS dxinfo, n, i{}\n" + unwind + "\n" + w	+ "\n"
 	
 	mmmse="optional match (n)--(m:MMSE) \

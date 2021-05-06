@@ -11,7 +11,7 @@ from database_v2 import update_database, create_indexes, write, dx_haschanged, d
 from query_sampler import query, get_query_list, return_all_properties
 from custom_query import query_builder, merge, info_builder
 import prettytable 
-from csv_preprocessing import preprocess, tsv2csv, FDG_preprocess, quoteCSV, summary_preprocess
+from csv_preprocessing import preprocess, tsv2csv, quoteCSV, summary_preprocess
 import zipfile
 import uuid
 #from test import test_ajax
@@ -28,7 +28,6 @@ with open('ADNI_ID_corr.csv') as file:
 ##Globals
 web.config.debug = False
 email_re='(?:[a-z0-9!#$%&\'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&\'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])'
-dupe_option=["VISCODE2", "VISCODE", "EXAMDATE", "SCANDATE", "UPDATE_STAMP", "USERDATE", "USERDATE2"]
 
 web.config.session_parameters['cookie_name'] = 'webpy_session_id'
 web.config.session_parameters['cookie_domain'] = os.environ.get('ADNIDB_COOKIE_DOMAIN', None)
@@ -147,8 +146,7 @@ def query_upper(q):
 
 # List of date variables that could be used for merging
 def select_datevars(properties):
-    return [x for x in properties if ( x.upper() in ("SCANDATE", "SCANDATE2", "USERDATE", "USERDATE2") ) ]
-
+    return [x for x in properties if ( x.upper() in ("SMARTDATE","EXAMDATE","SCANDATE") ) ]
 
 def select_visvars(properties):
     return [x for x in properties if (x.upper() in ("VISCODE2",))]
@@ -188,16 +186,6 @@ def upload_file(file,filedir,local_name=None):
                         fout.write(line) 
                 fout.close()
                 
-        elif 'FDG' in filename:
-            filepath = FDG_preprocess(newfilepath)
-            filename = filepath
-            for dir in filedir:
-                fout = open(dir +'/'+ filename,"w",newline="") # creates the file where the uploaded file should be stored
-                with open(filepath,'r') as file:
-                    for line in file:
-                        fout.write(line) 
-                fout.close()
-                
         elif 'scanner_summary' in filename:
             filepath = summary_preprocess(newfilepath)
             filename = filepath
@@ -225,16 +213,6 @@ def upload_file(file,filedir,local_name=None):
         if 'tsv' in filename:
             filepath=tsv2csv(filename,filepath)
             filename=filepath.split('/')[-1].replace('.tsv','.csv')
-            for dir in filedir:
-                fout = open(dir +'/'+ filename,"w",newline="") # creates the file where the uploaded file should be stored
-                with open(filepath,'r') as file:
-                    for line in file:
-                        fout.write(line) 
-                fout.close()
-                
-        elif 'FDG' in filename:
-            filepath = FDG_preprocess(filepath)
-            filename = filepath
             for dir in filedir:
                 fout = open(dir +'/'+ filename,"w",newline="") # creates the file where the uploaded file should be stored
                 with open(filepath,'r') as file:
@@ -626,8 +604,8 @@ class Temp:
                 print(x["label"])
                 properties = prop(x["label"])
                 properties.remove('RID')
-                datevars=[x for x in properties if ("SCANDATE" in x.upper())]
-                visvars=[x for x in properties if ("VISCODE2" in x.upper())]
+                datevars=select_datevars(properties)
+                visvars=select_visvars(properties)
                 #return json.dumps(properties)
                 return json.dumps({'label': x["label"], 'date':datevars, 'viscode':visvars, 'prop':properties})
                 
@@ -673,7 +651,7 @@ class Temp:
             if "datevar" in args:
                 x=web.input()
                 labels=prop(x["csvname"])
-                datevars=[x for x in labels if ("SCANDATE" in x.upper())]
+                datevars=[x for x in labels if (x.upper() in "SMARTDATE","SCANDATE","EXAMDATE")]
                 return datevars
                 
         if "dl_spreadsheet" in args:

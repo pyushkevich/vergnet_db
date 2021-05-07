@@ -35,12 +35,15 @@ config = {
 }
 
 if not args.use_cached_csv and not args.use_cached_pre:
-    run([rootdir+'/auto-dl/dl'],shell=True)
+    if args.filter is None:
+        run([rootdir+'/auto-dl/dl'],shell=True)
+    else:
+        run([rootdir + '/auto-dl/dl', args.filter], shell=True)
     print('Done downloading files')
 
 dir_csv=rootdir + "/instance/ADNI"
 
-csvfiles = [f for f in os.listdir(dir_csv) if os.path.isfile(os.path.join(dir_csv, f))]
+csvfiles = [f for f in sorted(os.listdir(dir_csv)) if os.path.isfile(os.path.join(dir_csv, f))]
 filedir = [config['ADNIDB_IMPORT_SAVEDIR'], config['ADNIDB_NEO4J_IMPORT']]
 
 # Read the registry CSV. This can be used to link visit codes to dates, facilitating

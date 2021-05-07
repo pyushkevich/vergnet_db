@@ -1,6 +1,9 @@
 #!/bin/bash
 set -x -e
 
+# Optional filter
+FILTER=${1}
+
 # Login
 curl -s "https://ida.loni.usc.edu/login.jsp?project=ADNI&page=HOME" \
   -c $ADNIDB_ROOT/instance/secrets/loni_cookie.txt \
@@ -26,10 +29,27 @@ for ROW in $(cat $ADNIDB_ROOT/ADNI_ID_corr.csv | awk 'NR > 1 {print $1}'); do
   CSV_NAME=$(echo $ROW | awk -F, '{print $1}')
   CSV_ID=$(echo $ROW | awk -F, '{printf "%s",$2}')
 
-  echo "Downloading $CSV_NAME VIA $CSV_ID"
-  curl -s -d userId=${USERID} -d authKey=${AUTHKEY} -d fileId=$CSV_ID -d type=GET_FILES \
-    -o $ADNIDB_ROOT/instance/ADNI/${CSV_NAME}.csv \
-    https://utilities.loni.usc.edu/download/study
+  if [[ $CSV_NAME =~ $FILTER ]]; then
+    echo "Downloading $CSV_NAME VIA $CSV_ID"
+    ATTEMPTS=0
+    SUCCESS=0
+    while [[ $ATTEMPTS -le 5 ]]; do
+      curl -S --fail --retry 5 -d userId=${USERID} -d authKey=${AUTHKEY} -d fileId=$CSV_ID -d type=GET_FILES \
+        -o $ADNIDB_ROOT/instance/ADNI/${CSV_NAME}.csv \
+        https://utilities.loni.usc.edu/download/study
+
+      if [[ $? -eq 0 ]]; then
+        SUCCESS=1
+        break
+      else
+        echo " -- download failed -- retrying"
+        ATTEMPTS=$((ATTEMPTS+1))
+      fi
+    done
+    if [[ $SUCCESS -eq 0 ]]; then
+      echo " -- failed after 5 attempts"
+    fi
+  fi
 
 done
 

@@ -380,9 +380,16 @@ function changeDefMerge(id){
 						seldate.appendChild(opbef);
 						seldate.appendChild(opaft);
 
+						seldate.setAttribute("onchange","onDateMatchChange(this.id)");
+
+						// Create a span for the range sub-option
+						var spandaterange = document.createElement("span");
+						spandaterange.id = "range"+seldate.id;
+
 						spanmerge.appendChild(seldate_label);
 						spanmerge.appendChild(seldate);
 						spanmerge.appendChild(document.createElement("br"));
+						spanmerge.appendChild(spandaterange);
 					}
 					else {
 						seltemp_label.innerHTML = "Visit code field:";
@@ -421,6 +428,39 @@ function changeDefMerge(id){
 				console.log('error');
 			}
 		});
+	}
+}
+
+function onDateMatchChange(id) {
+	var seldate = document.getElementById(id);
+
+	var spandaterange = document.getElementById("range"+id);
+	while (spandaterange.childElementCount > 0)
+		spandaterange.children[spandaterange.childElementCount-1].remove();
+
+	if(seldate.value === "closest") {
+		var datefrom = document.createElement("input");
+		datefrom.name = datefrom.id = "fromdate_" + id;
+		datefrom.value = -180;
+
+		var datefrom_label = document.createElement("label");
+		datefrom_label.control = datefrom.id;
+		datefrom_label.innerHTML = "Lower bound (days): ";
+
+		var dateto = document.createElement("input");
+		dateto.name = datefrom.id = "todate_" + id;
+		dateto.value = 180;
+
+		var dateto_label = document.createElement("label");
+		dateto_label.control = dateto.id;
+		dateto_label.innerHTML = "Upper bound (days): ";
+
+		spandaterange.appendChild(datefrom_label);
+		spandaterange.appendChild(datefrom);
+		spandaterange.appendChild(document.createElement("br"));
+		spandaterange.appendChild(dateto_label);
+		spandaterange.appendChild(dateto);
+		spandaterange.appendChild(document.createElement("br"));
 	}
 }
 

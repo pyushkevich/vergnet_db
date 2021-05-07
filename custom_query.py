@@ -46,7 +46,8 @@ def query_builder(qMajor, qOptional, qMerge, stdinfo):
 			for data in list(qOptional[opt]):
 				listemp += "n{num}.{data}, ".format(num = i, data = data)
 			q += withStr[:-1] + ", collect([abs(duration.inDays(date(n.{0}), date(n{num}.{1})).days), {list}]) as n{num}cond\n".format(qMerge[maj][mergetemp], qMerge[opt][mergetemp][0], list = listemp[:-2], num = i)
-			q += "unwind extract (x in n{num}cond | x[0]) as n{num}diff\n".format(num = i)
+			q += "unwind extract (x in filter(y in n{num}cond where y[0] > {fro} and y[0] < {to}) | x[0]) as n{num}diff\n".format(
+				num = i, fro = qMerge[opt][mergetemp][2], to = qMerge[opt][mergetemp][3])
 			q += withStr[:-1] + ", n{num}cond, min(n{num}diff) as minN{num}\n".format(num = i)
 			withStr = withStr[:-1] + ", n{num}cond, minN{num}\n".format(num = i)
 		

@@ -429,6 +429,9 @@ class Query:
                 if ("custommerge" + str(i) in keys): 
                     if (w["merge" + str(i)] == "date"):
                         qMerge[op] = {w["merge" + str(i)]: [w["custommerge" + str(i)], w["datecustommerge" + str(i)]]}
+                        if w["datecustommerge" + str(i)] == "closest":
+                            qMerge[op][w["merge" + str(i)]] += [
+                                int(w["fromdate_datecustommerge" + str(i)]), int(w["todate_datecustommerge" + str(i)])]
                     else:
                         qMerge[op] = {w["merge" + str(i)]: w["custommerge" + str(i)]}
                 else:

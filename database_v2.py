@@ -89,14 +89,20 @@ def update_database(csv_file_names):
         if 'ind' not in locals():
             csvfiles_list.append(csv)
             ind=len(csvfiles_list)-1
-        csv = csvfiles_list[ind]    
+        csv = csvfiles_list[ind]
+
+        # Delete existing as a separate transaction
+        tx_del = graph.begin()
+        tx_del.run("MATCH (n:%s) DETACH DELETE n" % (csv,))
+        tx_del.commit()
+
+        # Create the database
         create_indexes(csv)
-        cursors.append(tx.run("MATCH (n:%s) DETACH DELETE n" % (csv,)))
         cursors.append(tx.run(create_query_node(csv_file_name,'Person')))
         cursors.append(tx.run(create_query_node(csv_file_name,csv)))
         cursors.append(tx.run(create_query_relationship('Person',csv)))
-        
         delete_duplicates(cursors,tx,csv)
+
     tx.commit()    
     info_dict={"contains_updates":False, "nodes_created":0, "relationships_created":0, "exectime":0}
     for cursor in cursors:

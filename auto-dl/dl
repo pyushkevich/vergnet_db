@@ -29,7 +29,7 @@ for ROW in $(cat $ADNIDB_ROOT/ADNI_ID_corr.csv | awk 'NR > 1 {print $1}'); do
   CSV_NAME=$(echo $ROW | awk -F, '{print $1}')
   CSV_ID=$(echo $ROW | awk -F, '{printf "%s",$2}')
 
-  if [[ $CSV_NAME =~ $FILTER ]]; then
+  if [[ ! $FILTER || $CSV_NAME =~ $FILTER ]]; then
     echo "Downloading $CSV_NAME VIA $CSV_ID"
     ATTEMPTS=0
     SUCCESS=0

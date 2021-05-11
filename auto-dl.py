@@ -38,7 +38,7 @@ if not args.use_cached_csv and not args.use_cached_pre:
     if args.filter is None:
         run([rootdir+'/auto-dl/dl'],shell=True)
     else:
-        run([rootdir + '/auto-dl/dl', args.filter], shell=True)
+        run([rootdir + '/auto-dl/dl ' + args.filter], shell=True)
     print('Done downloading files')
 
 dir_csv=rootdir + "/instance/ADNI"

@@ -11,7 +11,7 @@ from database_v2 import update_database, create_indexes, write, dx_haschanged, d
 from query_sampler import query, get_query_list, return_all_properties
 from custom_query import query_builder, merge, info_builder
 import prettytable 
-from csv_preprocessing import preprocess, tsv2csv, quoteCSV, summary_preprocess
+from csv_preprocessing import preprocess_new, tsv2csv, quoteCSV, summary_preprocess
 import zipfile
 import uuid
 #from test import test_ajax
@@ -469,7 +469,7 @@ class Query:
                 
                 filename=upload_file(w,filedir,local_name="tmp_" + uuid.uuid4().hex)
                 input = filename.replace('.csv','')
-                preprocess(filename,filedir)
+                preprocess_new(filename,filedir)
                 filename=filename.replace('.csv','_temp.csv')
                 quoteCSV(filename, filedir)
                 info = update_database([filename])
@@ -543,7 +543,7 @@ class Update:
             filedir = [ config['ADNIDB_IMPORT_SAVEDIR'], config['ADNIDB_NEO4J_IMPORT'] ]
             filename=upload_file(x,filedir)            
             s.last_uploaded_file=filename
-            preprocess(filename,filedir)
+            preprocess_new(filename,filedir)
             filename=filename.replace('.csv','_temp.csv')
             quoteCSV(filename, filedir)
             info = update_database([filename])
@@ -635,7 +635,7 @@ class Temp:
 
                     # Upload the file and add to database
                     filename=upload_file(w,filedir,local_name=temp_name)
-                    preprocess(filename,filedir)
+                    preprocess_new(filename,filedir)
                     filename=filename.replace('.csv','_temp.csv')
                     quoteCSV(filename, filedir)
                     info = update_database([filename])

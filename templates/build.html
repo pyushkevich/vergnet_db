@@ -140,7 +140,7 @@ function disable(){
 	var selmaj = $('#major option:selected').length;
 	var selop = $('#optional option:selected').length;
 	var button1 = document.getElementById("step1done");
-	if (selmaj>0 && selop>0){button1.disabled=false;}
+	if (selmaj>0){button1.disabled=false;}
 	else{button1.disabled=true;}
 	
 	//step 2 done button

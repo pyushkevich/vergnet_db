@@ -91,6 +91,7 @@ def update_database(csv_file_names):
             ind=len(csvfiles_list)-1
         csv = csvfiles_list[ind]    
         create_indexes(csv)
+        cursors.append(tx.run("MATCH (n:%s) DETACH DELETE n" % (csv,)))
         cursors.append(tx.run(create_query_node(csv_file_name,'Person')))
         cursors.append(tx.run(create_query_node(csv_file_name,csv)))
         cursors.append(tx.run(create_query_relationship('Person',csv)))

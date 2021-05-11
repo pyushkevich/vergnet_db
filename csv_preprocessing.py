@@ -43,7 +43,6 @@ def set_rid_and_phase(df, i, row):
 
 # Helper function to set rid, viscode, phase in MRI/PET tables
 def fixup_imaging_csv(df):
-
     # Replacement of strings with VISCODE
     repdic = {
         "ADNI Baseline": "bl",
@@ -97,13 +96,13 @@ def fixup_imaging_csv(df):
 
 # New preprocessing code using Pandas - old code was full of holes I believe!
 def preprocess_new(csvfilename, dirs, registry=None):
-
     # If registry passed in, encapsulate its data in a dictionary
     reg_vc_vc2_dict = {}
     reg_vc2_date_dict = {}
     if registry is not None:
         for i, row in registry.dropna(subset=('RID', 'VISCODE', 'VISCODE2', 'EXAMDATE')).iterrows():
-            rid, vc, vc2, edate = str(row['RID']), str(row['VISCODE']), str(row['VISCODE2']), pd.to_datetime(row['EXAMDATE'])
+            rid, vc, vc2, edate = str(row['RID']), str(row['VISCODE']), str(row['VISCODE2']), pd.to_datetime(
+                row['EXAMDATE'])
             if rid not in reg_vc_vc2_dict:
                 reg_vc_vc2_dict[rid] = {}
             if rid not in reg_vc2_date_dict:
@@ -191,6 +190,26 @@ def preprocess_new(csvfilename, dirs, registry=None):
             for i, row in df.iterrows():
                 df.at[i, 'RID'] = int(row['subject_id'].split('_')[2])
 
+        elif csvfilename.startswith('DXSUM_PDXCONV_ADNIALL'):
+            df['SMARTDIAG'] = None
+
+            # ADNI1 stores current diagnosis in DXCURREN
+            idx_a1 = (df.Phase == 'ADNI1') & (pd.notna(df.DXCURREN))
+            df.at[idx_a1, 'SMARTDIAG'] = df.loc[idx_a1].DXCURREN.apply(int).replace({1: 'NL', 2: 'MCI', 3: 'AD'})
+
+            # ADNI2 stores current diagnosis and conversion status in DXCHANGE
+            idx_a2go = df.Phase.isin(('ADNIGO', 'ADNI2')) & (pd.notna(df.DXCHANGE))
+            df.at[idx_a2go, 'SMARTDIAG'] = df.loc[idx_a2go].DXCHANGE.replace({1: 'NL', 2: 'MCI', 3: 'AD',
+                                                                              4: 'MCI', 5: 'AD', 6: 'AD',
+                                                                              7: 'NC', 8: 'MCI', 9: 'NC'})
+
+            # ADNI3 uses DIAGNOSIS varaible
+            idx_a3 = (df.Phase == 'ADNI3') & (pd.notna(df.DIAGNOSIS))
+            df.at[idx_a3, 'SMARTDIAG'] = df.loc[idx_a3].DIAGNOSIS.apply(int).replace({1: 'NL', 2: 'MCI', 3: 'AD'})
+
+
+
+
 
         # In the case of the FDG summary measurement table, we perform pivoting and compute the AD signature
         # value as the sum of the ROIs
@@ -204,7 +223,7 @@ def preprocess_new(csvfilename, dirs, registry=None):
             df = df.reset_index()
 
             # Add signature value
-            df['ADSIGNATURE'] = df.loc[:,'Bilateral_CingulumPost':].mean(axis=1)
+            df['ADSIGNATURE'] = df.loc[:, 'Bilateral_CingulumPost':].mean(axis=1)
 
         # Replace screening viscodes with BL
         for col in 'VISCODE', 'VISCODE2':
@@ -245,8 +264,13 @@ def preprocess_new(csvfilename, dirs, registry=None):
                         df.at[i, 'SMARTDATE'] = pd.to_datetime(reg_vc2_date_dict[rid][vc2])
                         df.at[i, 'SMARTDATESRC'] = 'VISCODE2'
 
+        # Make sure smartdate is in date format
+        df['SMARTDATE'] = pd.to_datetime(df['SMARTDATE'])
+
         # Write to the temp file
-        df.to_csv(os.path.join(dir, csvfilename.replace('.csv', '_temp.csv')), index=False, quoting=csv.QUOTE_ALL)
+        df.to_csv(os.path.join(dir, csvfilename.replace('.csv', '_temp.csv')),
+                  index=False, quoting=csv.QUOTE_ALL,
+                  date_format='%Y-%m-%d')
         os.remove(os.path.join(dir, csvfilename))
 
 

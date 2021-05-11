@@ -20,7 +20,7 @@ def query_builder(qMajor, qOptional, qMerge, stdinfo):
 	
 	if 'dx' in stdinfo:
 		q += "optional match (p)--(d:DXSUM_PDXCONV_ADNIALL)\nwhere d.SMARTDATE<>\"\"\n"
-		q += withStr[:-1] + ", collect([abs(duration.inDays(date(n.{}),date(d.SMARTDATE)).days),d.DIAGNOSIS,d.DXCHANGE,d.DXCURREN,d.VISCODE2]) AS dxinfo\n".format(qMerge[maj]['date'])
+		q += withStr[:-1] + ", collect([abs(duration.inDays(date(n.{}),date(d.SMARTDATE)).days),d.SMARTDIAG,d.SMARTDATE]) AS dxinfo\n".format(qMerge[maj]['date'])
 		q += "unwind extract(x in dxinfo | x[0]) as diffdx\n"
 		q += withStr[:-1] + ", dxinfo, min(diffdx) as mindx\n"
 		withStr = withStr[:-1] + ", dxinfo, mindx\n"
@@ -94,9 +94,8 @@ def query_builder(qMajor, qOptional, qMerge, stdinfo):
 		q += "else \"\" end as PTAGE,\n".format(d = qMerge[maj]['date'])
 
 	if 'dx' in stdinfo:
-		q += "case when filter(x in dxinfo where x[0]=mindx)[-1][2]<>\"\" then filter(x in dxinfo where x[0]=mindx)[-1][2]\n"
-		q += "when filter(x in dxinfo where x[0]=mindx)[-1][1]<>\"\" then filter(x in dxinfo where x[0]=mindx)[-1][1]\n"
-		q += "else filter(x in dxinfo where x[0]=mindx)[-1][3] end as DXCHANGE,\n"
+		q += "filter(x in dxinfo where x[0]=mindx)[-1][1] as SMARTDIAG,\n"
+		q += "filter(x in dxinfo where x[0]=mindx)[-1][2] as SMARTDATE_DIAG,\n"
 
 	# Go through the major coulns
 	for majdata in list(qMajor[maj]):

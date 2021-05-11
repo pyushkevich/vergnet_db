@@ -56,7 +56,7 @@ def create_query_node(csv_file_name,node_type):
     #field_list=get_field_list(csv_file_name)
     get_field_list(csv_file_name,field_list)
         
-    q="load csv with headers from \"file:///" + csv_file_name +" \" as row \n"
+    q="using periodic commit load csv with headers from \"file:///" + csv_file_name +" \" as row \n"
     if node_type=='Person':
         q+="MERGE (n:Person{RID:row.RID})\
             ON CREATE SET n.RID = row.RID"    
@@ -79,7 +79,7 @@ def create_query_relationship(node1_label, node2_label, matching_properties=['RI
     ##Update the database from different .csv files
     #csv_file_names : a list of csv files' name
 def update_database(csv_file_names):
-    tx=graph.begin()
+    # tx=graph.begin()
     cursors = []
     for csv_file_name in csv_file_names:
         csv=csv_file_name.replace('_temp.csv','')
@@ -92,18 +92,17 @@ def update_database(csv_file_names):
         csv = csvfiles_list[ind]
 
         # Delete existing as a separate transaction
-        tx_del = graph.begin()
-        tx_del.run("MATCH (n:%s) DETACH DELETE n" % (csv,))
-        tx_del.commit()
+        graph.run("MATCH (n:%s) DETACH DELETE n" % (csv,))
 
         # Create the database
         create_indexes(csv)
-        cursors.append(tx.run(create_query_node(csv_file_name,'Person')))
-        cursors.append(tx.run(create_query_node(csv_file_name,csv)))
-        cursors.append(tx.run(create_query_relationship('Person',csv)))
-        delete_duplicates(cursors,tx,csv)
+        graph.run(create_query_node(csv_file_name,'Person'))
+        cursors.append(graph.run(create_query_node(csv_file_name,'Person')))
+        cursors.append(graph.run(create_query_node(csv_file_name,csv)))
+        cursors.append(graph.run(create_query_relationship('Person',csv)))
+        delete_duplicates(cursors,graph,csv)
 
-    tx.commit()    
+    # tx.commit()
     info_dict={"contains_updates":False, "nodes_created":0, "relationships_created":0, "exectime":0}
     for cursor in cursors:
         stats=cursor.stats()

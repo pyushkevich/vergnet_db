@@ -101,8 +101,8 @@ def preprocess_new(csvfilename, dirs, registry=None):
     reg_vc2_date_dict = {}
     if registry is not None:
         for i, row in registry.dropna(subset=('RID', 'VISCODE', 'VISCODE2', 'EXAMDATE')).iterrows():
-            rid, vc, vc2, edate = str(row['RID']), str(row['VISCODE']), str(row['VISCODE2']), pd.to_datetime(
-                row['EXAMDATE'])
+            rid, vc, vc2, edate = str(row['RID']), str(row['VISCODE']), str(row['VISCODE2']), \
+                                  pd.to_datetime(row['EXAMDATE'], errors='coerce')
             if rid not in reg_vc_vc2_dict:
                 reg_vc_vc2_dict[rid] = {}
             if rid not in reg_vc2_date_dict:
@@ -233,7 +233,7 @@ def preprocess_new(csvfilename, dirs, registry=None):
         # Format date fields
         for col in df.columns:
             if 'DATE' in col:
-                df[col] = pd.to_datetime(df[col], errors='ignore')
+                df[col] = pd.to_datetime(df[col], errors='coerce')
 
         # Create a SMARTDATE field that captures best available date
         df['SMARTDATE'] = None
@@ -265,7 +265,7 @@ def preprocess_new(csvfilename, dirs, registry=None):
                         df.at[i, 'SMARTDATESRC'] = 'VISCODE2'
 
         # Make sure smartdate is in date format
-        df['SMARTDATE'] = pd.to_datetime(df['SMARTDATE'])
+        df['SMARTDATE'] = pd.to_datetime(df['SMARTDATE'], errors='coerce')
 
         # Write to the temp file
         df.to_csv(os.path.join(dir, csvfilename.replace('.csv', '_temp.csv')),

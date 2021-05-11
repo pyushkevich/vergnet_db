@@ -207,8 +207,11 @@ def preprocess_new(csvfilename, dirs, registry=None):
             idx_a3 = (df.Phase == 'ADNI3') & (pd.notna(df.DIAGNOSIS))
             df.at[idx_a3, 'SMARTDIAG'] = df.loc[idx_a3].DIAGNOSIS.apply(int).replace({1: 'NL', 2: 'MCI', 3: 'AD'})
 
+        elif csvfilename.startswith('NEUROBAT'):
 
-
+            # Some rows will have empty LIMMEDIATE at baseline, in which case we want to copy that
+            # value and other L* from the screening visit.
+            print('hello')
 
 
         # In the case of the FDG summary measurement table, we perform pivoting and compute the AD signature

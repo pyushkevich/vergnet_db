@@ -14,7 +14,7 @@ def query_builder(qMajor, qOptional, qMerge, stdinfo):
 	
 	if 'demog' in stdinfo:
 		q += "optional match (p)--(P:PTDEMOG)\n"
-		q += withStr[:-1] + ", collect([P.PTGENDER, date({year:toInteger(P.PTDOBYY), month:toInteger(P.PTDOBMM)}), P.PTEDUCAT]) as demoginfo\n"
+		q += withStr[:-1] + ", collect([P.PTGENDER, date({year:toInteger(P.PTDOBYY), month:toInteger(P.PTDOBMM)}), P.PTEDUCAT, P.PTRACCAT]) as demoginfo\n"
 		withStr = withStr[:-1] + ", demoginfo\n"
 		tbl.append("PTDEMOG")
 	
@@ -92,6 +92,8 @@ def query_builder(qMajor, qOptional, qMerge, stdinfo):
 		q += "case when n.{d}<>\"\" then\ncase when demoginfo[0][0]=\"\" then duration.inMonths(demoginfo[1][1],date(n.{d})).months/12.0\n".format(d = qMerge[maj]['date'])
 		q += "else duration.inMonths(demoginfo[0][1],date(n.{d})).months/12.0 end\n".format(d = qMerge[maj]['date'])
 		q += "else \"\" end as PTAGE,\n".format(d = qMerge[maj]['date'])
+		q += "case when demoginfo[0][2]=\"\" then demoginfo[1][2] else demoginfo[0][2] end as PTEDUCAT,\n"
+		q += "case when demoginfo[0][3]=\"\" then demoginfo[1][3] else demoginfo[0][3] end as PTRACCAT,\n"
 
 	if 'dx' in stdinfo:
 		q += "filter(x in dxinfo where x[0]=mindx)[-1][1] as SMARTDIAG,\n"
